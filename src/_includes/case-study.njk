@@ -1,0 +1,24 @@
+---
+layout: base.njk
+---
+<div class="wrap" style="padding-top: 70px;">
+  <h1 style="font-family: var(--serif); font-style: italic; font-weight: 380; font-size: clamp(32px, 4vw, 36px); letter-spacing: normal; max-width: none;">{{ title }}</h1>
+  <span class="case-context">{{ context }}</span>
+
+  <div class="stat-strip">
+    {% for stat in stats %}
+    <div>
+      <div class="stat-num">{{ stat.n }}</div>
+      <div class="stat-label">{{ stat.label }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="case-body">
+    {{ content | safe }}
+  </div>
+
+  <div class="case-cta">
+    <strong>Facing something similar?</strong> I'm happy to compare notes. <a href="mailto:hello@pragmaticagents.dev">hello@pragmaticagents.dev</a> · <a href="https://www.linkedin.com/in/santhoshba/" target="_blank" rel="noopener">LinkedIn ↗</a>
+  </div>
+</div>

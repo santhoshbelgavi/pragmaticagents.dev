@@ -1,0 +1,21 @@
+---
+layout: base.njk
+title: "Case Studies — Pragmatic Agents"
+description: "Real problems at real scale. Every piece answers one question: what changed because I was here."
+permalink: /work/
+---
+<div class="wrap">
+  <section>
+    <h1>Case studies</h1>
+    <p class="intro">Real problems at real scale. Every piece answers one question: what changed because I was here.</p>
+
+    {% for item in collections.work | sort(attribute='data.order') %}
+    <div class="card">
+      <span class="card-title">{{ item.data.title }}</span>
+      <span class="card-context">{{ item.data.context }}</span>
+      <p>{{ item.data.description }}</p>
+      <a class="read-link" href="{{ item.url }}">Read →</a>
+    </div>
+    {% endfor %}
+  </section>
+</div>

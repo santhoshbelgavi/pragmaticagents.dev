@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{{ title }}</title>
+<meta name="description" content="{{ description }}">
+<link rel="canonical" href="{{ site.url }}{{ page.url }}">
+<meta property="og:title" content="{{ title }}">
+<meta property="og:description" content="{{ description }}">
+<meta property="og:url" content="{{ site.url }}{{ page.url }}">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/svg+xml" href="/favicon.svg">
+<link rel="preload" href="/fonts/instrument-sans-var.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="/fonts/geist-mono-400.woff2" as="font" type="font/woff2" crossorigin>
+<style>{% include "css/main.css" %}</style>
+</head>
+<body>
+<header class="site-header">
+  <div class="wrap">
+    <a class="wordmark" href="/">pragmaticagents<span class="accent">.dev</span></a>
+    <nav class="nav-links">
+      <a href="/work/" {% if page.url.startsWith('/work/') %}class="current"{% endif %}>Work</a>
+      <a href="/projects/" {% if page.url == '/projects/' %}class="current"{% endif %}>Projects</a>
+      <a href="/writing/" {% if page.url.startsWith('/writing/') %}class="current"{% endif %}>Writing</a>
+      <a href="/about/" {% if page.url == '/about/' %}class="current"{% endif %}>About</a>
+      <a class="external" href="https://santhoshbelgavi.com" target="_blank" rel="noopener">santhoshbelgavi.com ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+{{ content | safe }}
+</main>
+
+<footer class="site-footer">
+  <div class="wrap"><hr class="hairline"></div>
+  <div class="wrap">
+    <span class="foot-left"><a href="mailto:hello@pragmaticagents.dev">hello@pragmaticagents.dev</a> · <a href="https://www.linkedin.com/in/santhoshba/" target="_blank" rel="noopener">LinkedIn ↗</a></span>
+    <span>By <a href="https://santhoshbelgavi.com" rel="noopener">Santhosh Belgavi</a> · Pittsburgh, PA · Remote</span>
+  </div>
+</footer>
+</body>
+</html>

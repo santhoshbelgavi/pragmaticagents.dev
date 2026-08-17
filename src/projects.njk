@@ -1,0 +1,40 @@
+---
+layout: base.njk
+title: "Projects — Pragmatic Agents"
+description: "Systems I've designed and run on my own infrastructure. They exist because I wanted them, and they double as an honest signal: this is how I build when nobody is making me."
+permalink: /projects/
+---
+<div class="wrap">
+  <section>
+    <h1>Projects</h1>
+    <p class="intro">Systems I've designed and run on my own infrastructure. They exist because I wanted them, and they double as an honest signal: this is how I build when nobody is making me.</p>
+
+    <div class="card">
+      <h2 class="plain-title">Moneta</h2>
+      <span class="card-context">FastAPI · DuckDB · Rust gateway · React 19 · d3-sankey</span>
+      <p>A self-hosted personal finance platform tracking six brokerage accounts with proper performance math — TWR, MWR, Sharpe, max drawdown — fed by SimpleFIN, SEC EDGAR, Alpaca, yfinance, and FRED. Local-first by design: my financial data lives on my hardware, not in someone's cloud.</p>
+    </div>
+    <div class="card">
+      <h2 class="plain-title">SanthoshIAS</h2>
+      <span class="card-context">Rust · DataResolver priority-chain routing</span>
+      <p>A financial data gateway that routes requests across ThetaData, QuantData, DXLink, Alpaca, IBKR, and Tastyworks with priority-chain failover. One service, one contract, many providers — the same integration pattern I use at institutional scale, in miniature.</p>
+    </div>
+    <div class="card">
+      <h2 class="plain-title">FlowDeck</h2>
+      <span class="card-context">Rust · flowengine crate · JSON filter DSL</span>
+      <p>A self-hosted options-flow analytics platform that replaced a paid SaaS subscription. Live trade classification, z-score composite scoring, filters as configuration. The full story is in the <a href="/work/flowdeck/">case study</a>.</p>
+    </div>
+    <div class="card">
+      <h2 class="plain-title">APEX / AlphaEdge</h2>
+      <span class="card-context">Bayesian expectancy engine · per-symbol state machines</span>
+      <p>An options analytics and trading platform, now at v11 — Bayesian expectancy, market-character classification, and per-symbol state machines. The long-running project where I pressure-test quantitative ideas against production-grade engineering standards.</p>
+    </div>
+    <div class="card">
+      <h2 class="plain-title">KidStream</h2>
+      <span class="card-context">Pinchflat · Jellyfin · Swiftfin · Apple TV</span>
+      <p>A curated, self-hosted media stack for my kids — allowlisted content, no algorithm, no ads. Proof that the local-first philosophy survives contact with the toughest user base there is.</p>
+    </div>
+
+    <p class="body-text" style="margin-top: 32px;">All of it runs on a Terramaster NAS behind a Tailscale overlay network, in Docker, with local LLMs via Ollama where they earn their keep. The philosophy is consistent: local-first, self-hosted, zero unnecessary cloud dependency.</p>
+  </section>
+</div>
