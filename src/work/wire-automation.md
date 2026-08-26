@@ -28,11 +28,11 @@ A modular, configuration-driven wire-processing platform on the infrastructure t
 <div class="arch-diagram">
 <canvas id="archCanvas" height="380"></canvas>
 <div class="arch-controls">
-  <button class="arch-btn active" onclick="fireSource('api')">Fire REST API wire</button>
-  <button class="arch-btn" onclick="fireSource('file')">Fire flat file</button>
-  <button class="arch-btn" onclick="fireSource('zday')">Fire 0-day payment</button>
-  <button class="arch-btn" onclick="fireAll()">Fire all</button>
-  <button class="arch-btn active" onclick="toggleAuto()" id="autoBtn">Auto: ON</button>
+  <button class="arch-btn active" id="btnApi">Fire REST API wire</button>
+  <button class="arch-btn" id="btnFile">Fire flat file</button>
+  <button class="arch-btn" id="btnZday">Fire 0-day payment</button>
+  <button class="arch-btn" id="btnAll">Fire all</button>
+  <button class="arch-btn active" id="autoBtn">Auto: ON</button>
 </div>
 <div class="arch-stats">
   <div class="arch-stat"><div class="arch-stat-num" id="wireCount">0</div><div class="arch-stat-lbl">wires processed</div></div>
@@ -184,15 +184,20 @@ class Particle{
   }
 }
 
-window.fireSource=function(id){const idx=SRC.findIndex(s=>s.id===id);if(idx>=0)for(let i=0;i<3;i++)setTimeout(()=>particles.push(new Particle(idx)),i*200);};
-window.fireAll=function(){['api','file','zday'].forEach(id=>window.fireSource(id));};
-window.toggleAuto=function(){
+function fireSource(id){const idx=SRC.findIndex(s=>s.id===id);if(idx>=0)for(let i=0;i<3;i++)setTimeout(()=>particles.push(new Particle(idx)),i*200);}
+function fireAll(){['api','file','zday'].forEach(id=>fireSource(id));}
+function toggleAuto(){
   autoMode=!autoMode;
   const btn=document.getElementById('autoBtn');
   btn.textContent='Auto: '+(autoMode?'ON':'OFF');
   btn.classList.toggle('active',autoMode);
   if(autoMode)scheduleAuto();else clearTimeout(autoTimer);
-};
+}
+document.getElementById('btnApi').addEventListener('click',function(){fireSource('api');});
+document.getElementById('btnFile').addEventListener('click',function(){fireSource('file');});
+document.getElementById('btnZday').addEventListener('click',function(){fireSource('zday');});
+document.getElementById('btnAll').addEventListener('click',function(){fireAll();});
+document.getElementById('autoBtn').addEventListener('click',function(){toggleAuto();});
 function scheduleAuto(){
   if(!autoMode)return;
   window.fireSource(['api','file','zday','api'][Math.floor(Math.random()*4)]);
