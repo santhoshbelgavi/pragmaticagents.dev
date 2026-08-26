@@ -34,6 +34,13 @@ A modular, configuration-driven wire-processing platform on the infrastructure t
   <button class="arch-btn" id="btnAll">Fire all</button>
   <button class="arch-btn active" id="autoBtn">Auto: ON</button>
 </div>
+<div class="arch-config-row">
+  <span class="arch-config-label">Zero code changes — just add configuration:</span>
+  <button class="arch-btn arch-btn-config" id="btnAddSource">+ New source</button>
+  <button class="arch-btn arch-btn-config" id="btnAddFund">+ New fund</button>
+  <button class="arch-btn arch-btn-config" id="btnAddTeam">+ New team</button>
+  <button class="arch-btn arch-btn-config" id="btnReset">↺ Reset</button>
+</div>
 <div class="arch-stats">
   <div class="arch-stat"><div class="arch-stat-num" id="wireCount">0</div><div class="arch-stat-lbl">approved & executed</div></div>
   <div class="arch-stat"><div class="arch-stat-num" id="rejectCount" style="color:#B03030">0</div><div class="arch-stat-lbl">rejected / queued</div></div>

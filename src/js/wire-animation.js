@@ -452,11 +452,14 @@ document.addEventListener('DOMContentLoaded', function () {
     drawConnectors();
     drawPlatformBox();
     SRC.forEach(function(b){drawNode(b);});
+    drawAddedSources();
     MODS.forEach(function(b){drawNode(b);});
     drawNode(REJECT_BOX);
     drawReviewNode();
     drawExecNode();
     drawLiveCounter();
+    drawFlashes();
+    drawConfigLog();
     particles=particles.filter(function(p){var done=p.update();p.draw();return!done;});
     if(hoveredNode)drawTooltip(hoveredNode);
     requestAnimationFrame(tick);
@@ -480,7 +483,149 @@ document.addEventListener('DOMContentLoaded', function () {
     if(autoMode)scheduleAuto();else clearTimeout(autoTimer);
   }
 
-  var bm={btnApi:'api',btnFile:'file',btnZday:'zday'};
+  // ── DYNAMIC CONFIG ADDITIONS ──────────────────────────
+  var ADDED_SOURCES = [];  // dynamically added source boxes
+  var CONFIG_LOG = [];     // log of additions shown on canvas
+
+  var SOURCE_TEMPLATES = [
+    {id:'ftp',   label:'FTP feed',    sub:'new source', col:P.teal,  bg:P.tealBg,  ring:P.tealRing,  pc:P.pGreen},
+    {id:'api2',  label:'Partner API', sub:'new source', col:P.teal,  bg:P.tealBg,  ring:P.tealRing,  pc:P.pGreen},
+    {id:'swift2',label:'SWIFT feed',  sub:'new source', col:P.teal,  bg:P.tealBg,  ring:P.tealRing,  pc:P.pGreen},
+    {id:'mq',    label:'MQ stream',   sub:'new source', col:P.teal,  bg:P.tealBg,  ring:P.tealRing,  pc:P.pGreen},
+  ];
+  var FUND_TEMPLATES   = ['Fund IV','Fund V','SPV-12','CLO-3','PE Fund VII','Credit Fund II'];
+  var TEAM_TEMPLATES   = ['Credit Ops','IR Team','LP Ops','Risk Desk','Compliance'];
+
+  var srcTplIdx=0, fundIdx=0, teamIdx=0;
+  var flashItems = []; // {x,y,text,alpha,col}
+
+  function addFlash(x, y, text, col) {
+    flashItems.push({x:x, y:y, text:text, alpha:1.0, col:col, vy:-0.8*dpr});
+  }
+
+  function addSource() {
+    var tpl = SOURCE_TEMPLATES[srcTplIdx % SOURCE_TEMPLATES.length]; srcTplIdx++;
+    var sw = W*0.115, sh = H*0.095;
+    var baseY = SRC[SRC.length-1] ? bb(SRC[SRC.length-1]) + H*0.022
+                                   : H*0.30;
+    // If off-screen, stack beside existing
+    var newSrc = {
+      id: tpl.id+'_'+srcTplIdx, label: tpl.label, sub: tpl.sub,
+      x: W*0.085, y: Math.min(baseY, H*0.82),
+      w: sw, h: sh,
+      col: tpl.col, bg: tpl.bg, ring: tpl.ring, pc: tpl.pc,
+      _hl: 1.5, _pulse: 1.5, _new: true
+    };
+    ADDED_SOURCES.push(newSrc);
+    CONFIG_LOG.push({text:'+ source: '+tpl.label, col:P.teal, t:180});
+    addFlash(newSrc.x, newSrc.y - H*0.04, '+ '+tpl.label+' added — no code change', P.teal);
+    // Auto fire from it
+    for(var i=0;i<3;i++)(function(ii, s){
+      setTimeout(function(){ particles.push(new ParticleFrom(s)); }, ii*200+100);
+    })(i, newSrc);
+  }
+
+  function addFund() {
+    var name = FUND_TEMPLATES[fundIdx % FUND_TEMPLATES.length]; fundIdx++;
+    var m = MODS[1]; // Configuration module
+    m._hl=1.5; m._pulse=1.5;
+    CONFIG_LOG.push({text:'+ fund: '+name+' enabled', col:P.purple, t:180});
+    addFlash(m.x, bt(m)-H*0.04, '+ '+name+' — config only, no deployment', P.purple);
+    // Fire a burst through the config module
+    for(var i=0;i<4;i++)(function(ii){
+      setTimeout(function(){ particles.push(new Particle(Math.floor(Math.random()*SRC.length))); }, ii*160+50);
+    })(i);
+  }
+
+  function addTeam() {
+    var name = TEAM_TEMPLATES[teamIdx % TEAM_TEMPLATES.length]; teamIdx++;
+    var m = MODS[1]; // Configuration module
+    m._hl=1.2; m._pulse=1.2;
+    CONFIG_LOG.push({text:'+ team: '+name+' routed', col:P.purple, t:180});
+    addFlash(m.x, bt(m)-H*0.04, '+ Team: '+name+' — routed via config', P.purple);
+    for(var i=0;i<3;i++)(function(ii){
+      setTimeout(function(){ particles.push(new Particle(Math.floor(Math.random()*SRC.length))); }, ii*180+50);
+    })(i);
+  }
+
+  function resetConfig() {
+    ADDED_SOURCES = [];
+    CONFIG_LOG = [];
+    flashItems = [];
+    srcTplIdx=0; fundIdx=0; teamIdx=0;
+    addFlash(W/2, H*0.5, '↺ Configuration reset', P.muted);
+  }
+
+  // Particle that starts from a dynamic source
+  function ParticleFrom(src) {
+    this.phase=0; this.t=0; this.speed=0.015+Math.random()*0.008;
+    this.col=src.pc||P.pGreen; this.size=dpr*(2.0+Math.random()*0.8);
+    this.sx=br(src); this.sy=bcy(src);
+    this.tx=0; this.ty=0; this.history=[]; this.path=null;
+    var r=Math.random();
+    this.fate=r<0.12?'reject_en':r<0.22?'reject_rv':'direct';
+    this.setTarget();
+  }
+  ParticleFrom.prototype.setTarget  = Particle.prototype.setTarget;
+  ParticleFrom.prototype.currentPos = Particle.prototype.currentPos;
+  ParticleFrom.prototype.update     = Particle.prototype.update;
+  ParticleFrom.prototype.draw       = Particle.prototype.draw;
+
+  function drawAddedSources() {
+    ADDED_SOURCES.forEach(function(s) {
+      if(s._hl) s._hl=Math.max(0,s._hl-0.025);
+      if(s._pulse) s._pulse=Math.max(0,s._pulse-0.030);
+      drawNode(s);
+      // connector to normalize
+      var m=MODS[0];
+      ctx.beginPath(); ctx.moveTo(br(s),bcy(s));
+      ctx.bezierCurveTo(br(s)+W*0.04,bcy(s),bl(m)-W*0.02,bcy(m),bl(m),bcy(m));
+      ctx.strokeStyle=rgba(P.teal,0.22); ctx.lineWidth=dpr*0.9;
+      ctx.setLineDash([4*dpr,4*dpr]); ctx.stroke(); ctx.setLineDash([]);
+    });
+  }
+
+  function drawConfigLog() {
+    var x=W*0.085+W*0.115/2, y=H-H*0.005;
+    var fsize=fs(9.5);
+    ctx.font='500 '+fsize+'px -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif';
+    CONFIG_LOG = CONFIG_LOG.filter(function(e){ e.t--; return e.t>0; });
+    CONFIG_LOG.slice(-4).forEach(function(e,i) {
+      var alpha=Math.min(1, e.t/30);
+      var tw=ctx.measureText(e.text).width+10*dpr, th=13*dpr;
+      var lx=x, ly=y-(i*(th+3*dpr));
+      ctx.beginPath(); ctx.roundRect(lx-tw/2, ly-th, tw, th, 4*dpr);
+      ctx.fillStyle=rgba(e.col,0.10*alpha); ctx.fill();
+      ctx.fillStyle=rgba(e.col,0.9*alpha);
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(e.text, lx, ly-th/2);
+    });
+  }
+
+  function drawFlashes() {
+    flashItems = flashItems.filter(function(f){ f.alpha-=0.012; f.y+=f.vy; return f.alpha>0; });
+    flashItems.forEach(function(f) {
+      var fsize=fs(11);
+      ctx.font='600 '+fsize+'px -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif';
+      var tw=ctx.measureText(f.text).width+16*dpr, th=18*dpr;
+      ctx.beginPath(); ctx.roundRect(f.x-tw/2, f.y-th/2, tw, th, 6*dpr);
+      ctx.fillStyle=rgba(f.col,0.12*f.alpha); ctx.fill();
+      ctx.strokeStyle=rgba(f.col,0.3*f.alpha); ctx.lineWidth=dpr; ctx.stroke();
+      ctx.fillStyle=rgba(f.col,f.alpha);
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(f.text, f.x, f.y);
+    });
+  }
+
+  // Wire up config buttons
+  var bAddSrc=document.getElementById('btnAddSource');
+  var bAddFund=document.getElementById('btnAddFund');
+  var bAddTeam=document.getElementById('btnAddTeam');
+  var bReset=document.getElementById('btnReset');
+  if(bAddSrc)  bAddSrc.addEventListener('click',  addSource);
+  if(bAddFund) bAddFund.addEventListener('click',  addFund);
+  if(bAddTeam) bAddTeam.addEventListener('click',  addTeam);
+  if(bReset)   bReset.addEventListener('click',    resetConfig);
   Object.keys(bm).forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',function(){fireSource(bm[id]);});});
   var bAll=document.getElementById('btnAll'),bAuto=document.getElementById('autoBtn');
   if(bAll)bAll.addEventListener('click',fireAll);
@@ -489,7 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
   canvas.addEventListener('mousemove',function(e){
     var rect=canvas.getBoundingClientRect();
     var mx=(e.clientX-rect.left)*dpr,my=(e.clientY-rect.top)*dpr;
-    var all=SRC.concat(MODS).concat([REJECT_BOX,REVIEW_BOX,EXEC_BOX]);
+    var all=SRC.concat(ADDED_SOURCES).concat(MODS).concat([REJECT_BOX,REVIEW_BOX,EXEC_BOX]);
     hoveredNode=null;
     for(var i=0;i<all.length;i++){if(inside(all[i],mx,my)){hoveredNode=all[i];break;}}
     canvas.style.cursor=hoveredNode?'help':'default';
