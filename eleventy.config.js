@@ -1,6 +1,7 @@
 export default function (eleventyConfig) {
   eleventyConfig.addPassthroughCopy({ "src/public": "/" });
   eleventyConfig.addPassthroughCopy({ "src/fonts": "/fonts" });
+  eleventyConfig.addPassthroughCopy({ "src/js": "/js" });
   eleventyConfig.addFilter("readableDate", (d) =>
     new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
   );
