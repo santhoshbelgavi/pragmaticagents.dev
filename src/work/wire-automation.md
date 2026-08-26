@@ -7,9 +7,9 @@ order: 1
 description: "How a purpose-built wire automation platform on Kyriba, SWIFT, and Goldman Sachs Transaction Banking rails took a top PE firm from manual wire operations to 99%+ straight-through processing."
 stats:
   - { n: "$350B+", label: "wires since inception" }
+  - { n: "$500K+", label: "saved — vendor decision" }
   - { n: "0%→99%+", label: "straight-through processing" }
   - { n: "99.9%", label: "instructed via SWIFT" }
-  - { n: "0", label: "missed deadlines in 3 years" }
 ---
 ## The problem
 
@@ -47,7 +47,7 @@ Payment initiation was standardized across middle-office teams; instructions flo
 
 ## What changed
 
-Straight-through processing went from 0% to 99%+, with 99.9% of transactions instructed via SWIFT. The platform has processed $350B+ in wires since inception and absorbed roughly 18x volume growth without headcount growth and without architectural rework — a direct consequence of the configuration-driven design. New funds and teams onboarded by adding data, not by touching the system. Entity onboarding — KYC, account opening, funding — compressed to about three days, and the operation has gone three years without a missed deadline. The work was recognized in the Adam Smith Awards 2024 (Highly Commended, Top Treasury Team); the public write-up is here: [Lean team delivers complete transformation](https://treasurytoday.com/asa-2024-winners/lean-team-delivers-complete-transformation/).
+Straight-through processing went from 0% to 99%+, with 99.9% of transactions instructed via SWIFT. The platform has processed $350B+ in wires since inception and absorbed roughly 18x volume growth without headcount growth and without architectural rework — a direct consequence of the configuration-driven design. New funds and teams onboarded by adding data, not by touching the system. Entity onboarding — KYC, account opening, funding — compressed to about three days, and the operation has gone three years without a missed deadline. Declining the vendor proposal saved over $500K in platform spend — the result of evaluating what the firm actually needed against what was being sold. The work was recognized in the Adam Smith Awards 2024 (Highly Commended, Top Treasury Team); the public write-up is here: [Lean team delivers complete transformation](https://treasurytoday.com/asa-2024-winners/lean-team-delivers-complete-transformation/).
 
 ## Why this generalizes
 
