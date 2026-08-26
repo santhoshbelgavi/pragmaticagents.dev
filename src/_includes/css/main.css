@@ -268,35 +268,37 @@ h1 {
 
 /* architecture diagram */
 .arch-diagram {
-  margin: 40px -20px 8px;
-  background: var(--card);
-  border: 1px solid var(--hairline);
-  border-radius: 10px;
+  margin: 44px -24px 8px;
+  background: #F7F4EF;
+  border: 1px solid rgba(0,0,0,0.07);
+  border-radius: 12px;
   overflow: hidden;
-  padding: 20px 12px 16px;
+  padding: 20px 12px 20px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.06);
 }
 .arch-diagram canvas {
   width: 100%;
-  border-radius: 6px;
+  border-radius: 8px;
   display: block;
 }
 .arch-controls {
   display: flex;
   gap: 8px;
   flex-wrap: wrap;
-  margin-top: 14px;
+  margin-top: 16px;
   align-items: center;
 }
 .arch-btn {
-  padding: 6px 13px;
-  border-radius: 5px;
-  border: 1px solid var(--hairline);
-  background: var(--bg);
-  color: var(--secondary);
-  font-size: 12.5px;
+  padding: 7px 16px;
+  border-radius: 6px;
+  border: 1px solid rgba(0,0,0,0.12);
+  background: #fff;
+  color: #3A362F;
+  font-size: 13px;
   cursor: pointer;
   font-family: var(--mono);
-  transition: all 0.15s;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  letter-spacing: 0.01em;
 }
 .arch-btn:hover { border-color: var(--accent); color: var(--accent); }
 .arch-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
@@ -317,8 +319,9 @@ h1 {
   flex: 1;
   min-width: 90px;
   padding: 10px 14px;
-  border-radius: 6px;
-  border: 1px solid rgba(168,118,59,0.3);
+  border-radius: 8px;
+  border: 1px solid rgba(168,118,59,0.25);
+  background: #fff;
   text-align: center;
 }
 .arch-stat-num { font-family: var(--mono); font-size: 17px; font-weight: 600; color: var(--accent); }
