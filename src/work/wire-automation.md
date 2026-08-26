@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "$350B in wires, 0% to 99%+ STP — no new vendor tool"
+title: "$350B in wires, 0% to 99%+ STP — rigorous analysis, right architecture"
 context: "A top PE firm · Treasury & Middle Office · 2022–2026"
 order: 1
 description: "How a purpose-built wire automation platform on Kyriba, SWIFT, and Goldman Sachs Transaction Banking rails took a top PE firm from manual wire operations to 99%+ straight-through processing."
