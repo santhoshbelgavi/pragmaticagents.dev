@@ -26,7 +26,7 @@ Reading that proposal made the answer clear. We were being asked to build the ha
 A modular, configuration-driven wire-processing platform on the infrastructure the firm already owned. The design principle from day one was horizontal scale without rework: new funds, teams, and standing settlement instructions are added as configuration, not code — no deployment, no developer involvement. Payment sources — REST APIs, flat files, same-day real-time payments — are normalized into a single shape before entering the processing core, and adding a new source type requires only configuration. Individual funds can be enabled or disabled at any granularity: per fund, per team, or any combination the business needs.
 
 <div class="arch-diagram">
-<canvas id="archCanvas" height="380"></canvas>
+<canvas id="archCanvas" height="460"></canvas>
 <div class="arch-controls">
   <button class="arch-btn active" id="btnApi">Fire REST API wire</button>
   <button class="arch-btn" id="btnFile">Fire flat file</button>
@@ -35,9 +35,9 @@ A modular, configuration-driven wire-processing platform on the infrastructure t
   <button class="arch-btn active" id="autoBtn">Auto: ON</button>
 </div>
 <div class="arch-stats">
-  <div class="arch-stat"><div class="arch-stat-num" id="wireCount">0</div><div class="arch-stat-lbl">wires processed</div></div>
+  <div class="arch-stat"><div class="arch-stat-num" id="wireCount">0</div><div class="arch-stat-lbl">approved & executed</div></div>
+  <div class="arch-stat"><div class="arch-stat-num" id="rejectCount" style="color:#B03030">0</div><div class="arch-stat-lbl">rejected / queued</div></div>
   <div class="arch-stat"><div class="arch-stat-num">$350B+</div><div class="arch-stat-lbl">since inception</div></div>
-  <div class="arch-stat"><div class="arch-stat-num">99%+</div><div class="arch-stat-lbl">STP rate</div></div>
   <div class="arch-stat"><div class="arch-stat-num">99.9%</div><div class="arch-stat-lbl">via SWIFT</div></div>
 </div>
 <div class="arch-caption">Live simulation — sources normalize and route through the platform core to execution rails.</div>
