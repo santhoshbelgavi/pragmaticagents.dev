@@ -21,11 +21,13 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   var W, H;
-  var SRC=[], MODS=[], EXEC=[];
-  var REJECT_BOX=null, REVIEW_BOX=null, TMS_BOX=null;
+  var SRC=[], MODS=[];
+  var REJECT_BOX=null, REVIEW_BOX=null, EXEC_BOX=null;
 
-  // helpers
-  function rgba(hex,a){var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);return'rgba('+r+','+g+','+b+','+a+')';}
+  function rgba(hex,a){
+    var r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);
+    return 'rgba('+r+','+g+','+b+','+a+')';
+  }
   function bcy(b){return b.y+b.h/2;}
   function brx(b){return b.x+b.w/2;}
   function blx(b){return b.x-b.w/2;}
@@ -34,71 +36,53 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function layout(){
     var cw=canvas.parentElement.clientWidth-48;
-    var ch=560;
+    var ch=520;
     canvas.style.width=cw+'px'; canvas.style.height=ch+'px';
     canvas.width=Math.floor(cw*dpr); canvas.height=Math.floor(ch*dpr);
     W=canvas.width; H=canvas.height;
 
-    var srcX   = W*0.08;
-    var modX   = W*0.34;
-    var rColX  = W*0.72;  // reject queue + review column
-    var execX  = W*0.92;  // SWIFT + bank apis
+    var srcX  = W*0.08;
+    var modX  = W*0.33;
+    var rColX = W*0.70;
+    var execX = W*0.88;
+    var gap   = H*0.024;
 
-    var gap=H*0.022;
-    var pad=H*0.05;
-
-    // ── Sources (left, vertically centered in middle 60% of canvas)
-    var sh=(H*0.55-gap*2)/3;
-    var srcTop=H*0.22;
+    // Sources
+    var sh=(H*0.54-gap*2)/3;
+    var srcTop=H*0.23;
     SRC=[
-      {id:'api', label:'REST APIs',     sub:'real-time', x:srcX,y:srcTop,           w:W*0.12,h:sh,col:C.amber, colD:C.amberD},
-      {id:'file',label:'Flat files',    sub:'batch',     x:srcX,y:srcTop+sh+gap,    w:W*0.12,h:sh,col:C.amber, colD:C.amberD},
-      {id:'zday',label:'0-day',         sub:'same-day',  x:srcX,y:srcTop+sh*2+gap*2,w:W*0.12,h:sh,col:C.amber, colD:C.amberD},
+      {id:'api', label:'REST APIs',  sub:'real-time', x:srcX,y:srcTop,            w:W*0.12,h:sh,col:C.amber,colD:C.amberD},
+      {id:'file',label:'Flat files', sub:'batch',     x:srcX,y:srcTop+sh+gap,     w:W*0.12,h:sh,col:C.amber,colD:C.amberD},
+      {id:'zday',label:'0-day',      sub:'same-day',  x:srcX,y:srcTop+sh*2+gap*2, w:W*0.12,h:sh,col:C.amber,colD:C.amberD},
     ];
 
-    // ── Platform modules (center column)
-    var mh=(H*0.82-gap*3)/4;
+    // Platform modules
+    var mh=(H*0.84-gap*3)/4;
     var modTop=H*0.05;
     MODS=[
-      {id:'norm',label:'Normalize data',      sub:'unify all source formats',              x:modX,y:modTop,             w:W*0.38,h:mh,col:C.amber, colD:C.amberD, _hl:0},
-      {id:'cfg', label:'Configuration module',sub:'funds · teams · SSIs — data not code', x:modX,y:modTop+mh+gap,      w:W*0.38,h:mh,col:C.purple,colD:C.purpleD,_hl:0},
-      {id:'en',  label:'Enable / disable',    sub:'some pass · some reject',               x:modX,y:modTop+mh*2+gap*2,  w:W*0.38,h:mh,col:C.red,   colD:C.redD,   _hl:0},
-      {id:'stp', label:'STP core engine',     sub:'validate · match SSI · route',          x:modX,y:modTop+mh*3+gap*3,  w:W*0.38,h:mh,col:C.teal,  colD:C.tealD,  _hl:0},
+      {id:'norm',label:'Normalize data',      sub:'unify all source formats',              x:modX,y:modTop,            w:W*0.36,h:mh,col:C.amber, colD:C.amberD, _hl:0},
+      {id:'cfg', label:'Configuration module',sub:'funds · teams · SSIs — data not code', x:modX,y:modTop+mh+gap,     w:W*0.36,h:mh,col:C.purple,colD:C.purpleD,_hl:0},
+      {id:'en',  label:'Enable / disable',    sub:'some pass · some reject',               x:modX,y:modTop+mh*2+gap*2, w:W*0.36,h:mh,col:C.red,   colD:C.redD,   _hl:0},
+      {id:'stp', label:'STP core engine',     sub:'validate · match SSI · route',          x:modX,y:modTop+mh*3+gap*3, w:W*0.36,h:mh,col:C.teal,  colD:C.tealD,  _hl:0},
     ];
 
-    // ── Right column: Reject Queue (top) → Human Review (middle)
-    var rqH=H*0.12, rvH=H*0.17, rcGap=H*0.055;
+    // Right column: Reject Queue (top) + Human Review (below)
+    var rqH=H*0.13, rvH=H*0.19, rcGap=H*0.05;
     var rcTop=H*0.05;
+    REJECT_BOX={label:'Reject queue',  sub:'requires investigation', x:rColX,y:rcTop,              w:W*0.22,h:rqH,col:C.red,   colD:C.redD,   _hl:0};
+    REVIEW_BOX={label:'Human review',  sub:'approves or rejects',    x:rColX,y:rcTop+rqH+rcGap,   w:W*0.22,h:rvH,col:C.orange,colD:C.orangeD,_hl:0};
 
-    REJECT_BOX={
-      label:'Reject queue', sub:'requires investigation',
-      x:rColX, y:rcTop, w:W*0.21, h:rqH,
-      col:C.red, colD:C.redD, _hl:0
-    };
-    REVIEW_BOX={
-      label:'Human review', sub:'approves or rejects',
-      x:rColX, y:rcTop+rqH+rcGap, w:W*0.21, h:rvH,
-      col:C.orange, colD:C.orangeD, _hl:0
-    };
-
-    // ── TMS — far top-right, direct STP bypass lane
-    TMS_BOX={
-      label:'Kyriba TMS', sub:'direct STP',
-      x:execX, y:rcTop, w:W*0.11, h:rqH+rcGap+rvH,  // spans full reject+review height
+    // Unified execution box — vertically spans from top of reject down to bottom of review
+    var execTop=rcTop;
+    var execH=rqH+rcGap+rvH;
+    EXEC_BOX={
+      label:'Execution',
+      lines:['Kyriba TMS','SWIFT','Bank APIs'],
+      x:execX, y:execTop, w:W*0.14, h:execH,
       col:C.blue, colD:C.blueD, _hl:0
     };
-
-    // ── Other exec rails below review box
-    var execTop=bbot(REVIEW_BOX)+rcGap;
-    var execAvail=H-execTop-H*0.03;
-    var eh=(execAvail-gap)/2;
-    EXEC=[
-      {id:'swift', label:'SWIFT',     sub:'99.9% of wires', x:execX,y:execTop,       w:W*0.11,h:eh,col:C.blue,colD:C.blueD},
-      {id:'bank',  label:'Bank APIs', sub:'direct rails',   x:execX,y:execTop+eh+gap,w:W*0.11,h:eh,col:C.blue,colD:C.blueD},
-    ];
   }
 
-  // ── Drawing helpers
   function drawBox(b,hl){
     hl=hl||0;
     var r=7*dpr,x=blx(b),y=b.y;
@@ -115,6 +99,43 @@ document.addEventListener('DOMContentLoaded', function () {
     ctx.fillStyle=C.muted;
     ctx.font=ss+'px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
     ctx.fillText(b.sub,b.x,b.y+b.h*0.70);
+  }
+
+  function drawExecBox(){
+    var b=EXEC_BOX, hl=b._hl||0;
+    var r=7*dpr,x=blx(b),y=b.y;
+    ctx.beginPath();ctx.roundRect(x,y,b.w,b.h,r);
+    ctx.fillStyle=rgba(b.col,0.10+hl*0.12);ctx.fill();
+    ctx.strokeStyle=rgba(b.colD,0.45+hl*0.4);
+    ctx.lineWidth=dpr*(hl?2:0.9);ctx.stroke();
+
+    // Title
+    var fs=Math.max(10,Math.floor(12*dpr/2));
+    ctx.fillStyle=b.colD;
+    ctx.font='700 '+fs+'px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+    ctx.textAlign='center';ctx.textBaseline='middle';
+    ctx.fillText(b.label,b.x,b.y+b.h*0.14);
+
+    // Divider line
+    ctx.beginPath();
+    ctx.moveTo(blx(b)+8*dpr, b.y+b.h*0.26);
+    ctx.lineTo(brx(b)-8*dpr, b.y+b.h*0.26);
+    ctx.strokeStyle=rgba(b.colD,0.2);ctx.lineWidth=dpr*0.6;ctx.stroke();
+
+    // Three sub-labels
+    var ls=b.lines, ss=Math.max(8,Math.floor(10*dpr/2));
+    ctx.font='500 '+ss+'px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
+    ctx.fillStyle=b.colD;
+    var slotH=(b.h*0.74)/ls.length;
+    ls.forEach(function(lbl,i){
+      var ly=b.y+b.h*0.26+slotH*(i+0.5);
+      // small dot
+      ctx.beginPath();ctx.arc(blx(b)+14*dpr,ly,2.5*dpr,0,Math.PI*2);
+      ctx.fillStyle=rgba(b.colD,0.5);ctx.fill();
+      ctx.fillStyle=b.colD;
+      ctx.textAlign='left';ctx.textBaseline='middle';
+      ctx.fillText(lbl, blx(b)+22*dpr, ly);
+    });
   }
 
   function drawReviewBox(){
@@ -155,15 +176,21 @@ document.addEventListener('DOMContentLoaded', function () {
     ctx.fillText('Payment automation platform',m.x,y+4*dpr);
   }
 
-  function label(text,x,y,col,align){
+  function lbl(text,x,y,col,align){
     var fs=Math.max(7,Math.floor(8*dpr/2));
     ctx.font='500 '+fs+'px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif';
     ctx.fillStyle=rgba(col,0.85);ctx.textAlign=align||'center';ctx.textBaseline='middle';
     ctx.fillText(text,x,y);
   }
 
+  function curve(sx,sy,tx,ty,col){
+    var mx=(sx+tx)/2, my=(sy+ty)/2;
+    ctx.beginPath();ctx.moveTo(sx,sy);
+    ctx.bezierCurveTo(sx+(tx-sx)*0.5,sy,tx-(tx-sx)*0.3,ty,tx,ty);
+    ctx.strokeStyle=rgba(col,0.28);ctx.stroke();
+  }
+
   function drawConnectors(){
-    var stp=MODS[3],en=MODS[2],rv=REVIEW_BOX,rq=REJECT_BOX,tms=TMS_BOX;
     ctx.setLineDash([4*dpr,4*dpr]);ctx.lineWidth=dpr*0.7;
 
     // Sources → Normalize
@@ -174,68 +201,61 @@ document.addEventListener('DOMContentLoaded', function () {
       ctx.bezierCurveTo(sx+W*0.06,sy,tx-W*0.06,ty,tx,ty);ctx.stroke();
     });
 
-    // Module chain norm→cfg→en→stp
+    // Module chain
     ctx.strokeStyle=rgba(C.gray,0.2);
     for(var i=0;i<MODS.length-1;i++){
       var a=MODS[i],b=MODS[i+1];
       ctx.beginPath();ctx.moveTo(a.x,bbot(a));ctx.lineTo(b.x,btop(b));ctx.stroke();
     }
 
-    // Enable/Disable → Reject Queue (right then up)
+    var en=MODS[2],stp=MODS[3],rv=REVIEW_BOX,rq=REJECT_BOX,ex=EXEC_BOX;
+
+    // Enable/Disable → Reject Queue
     ctx.strokeStyle=rgba(C.redD,0.3);
-    ctx.beginPath();
-    ctx.moveTo(brx(en),bcy(en));
-    ctx.bezierCurveTo(brx(en)+W*0.07,bcy(en),blx(rq),bcy(rq),blx(rq),bcy(rq));
+    ctx.beginPath();ctx.moveTo(brx(en),bcy(en));
+    ctx.bezierCurveTo(brx(en)+W*0.06,bcy(en),blx(rq),bcy(rq),blx(rq),bcy(rq));
     ctx.stroke();
-    label('rejected',brx(en)+W*0.035,bcy(en)-H*0.022,C.redD,'center');
+    lbl('rejected',brx(en)+W*0.03,bcy(en)-H*0.025,C.redD);
 
-    // STP → TMS (direct, skip review — most wires)
-    ctx.strokeStyle=rgba(C.blueD,0.3);
-    ctx.beginPath();
-    ctx.moveTo(brx(stp),bcy(stp));
-    ctx.bezierCurveTo(brx(stp)+W*0.05,bcy(stp),blx(tms),bcy(tms),blx(tms),bcy(tms));
+    // STP → Execution (direct — most wires, smooth bezier)
+    ctx.strokeStyle=rgba(C.blueD,0.35);ctx.lineWidth=dpr*1.2;
+    ctx.beginPath();ctx.moveTo(brx(stp),bcy(stp));
+    ctx.bezierCurveTo(brx(stp)+W*0.08,bcy(stp),blx(ex),bcy(ex),blx(ex),bcy(ex));
     ctx.stroke();
-    label('direct STP',brx(stp)+W*0.04,bcy(stp)-H*0.025,C.blueD,'center');
+    ctx.lineWidth=dpr*0.7;
+    lbl('direct STP (most wires)',brx(stp)+W*0.045,bcy(stp)-H*0.025,C.blueD);
 
-    // STP → Human Review (exception wires)
+    // STP → Human Review (exceptions)
     ctx.strokeStyle=rgba(C.orangeD,0.3);
-    ctx.beginPath();
-    ctx.moveTo(brx(stp),bcy(stp)+H*0.025);
-    ctx.bezierCurveTo(brx(stp)+W*0.06,bcy(stp)+H*0.025,blx(rv),bcy(rv),blx(rv),bcy(rv));
+    ctx.beginPath();ctx.moveTo(brx(stp),bcy(stp)+H*0.022);
+    ctx.bezierCurveTo(brx(stp)+W*0.06,bcy(stp)+H*0.022,blx(rv),bcy(rv),blx(rv),bcy(rv));
     ctx.stroke();
-    label('exceptions',brx(stp)+W*0.04,bcy(stp)+H*0.048,C.orangeD,'center');
+    lbl('exceptions',brx(stp)+W*0.04,bcy(stp)+H*0.05,C.orangeD);
 
     // Human Review → Reject Queue (up)
     ctx.strokeStyle=rgba(C.redD,0.25);
-    ctx.beginPath();
-    ctx.moveTo(rv.x,btop(rv));ctx.lineTo(rq.x,bbot(rq));
-    ctx.stroke();
-    label('rejected',blx(rv)-W*0.01,bcy(rv)-rv.h*0.38,C.redD,'right');
+    ctx.beginPath();ctx.moveTo(rv.x,btop(rv));ctx.lineTo(rq.x,bbot(rq));ctx.stroke();
+    lbl('rejected',blx(rv)-W*0.008,bcy(rv)-rv.h*0.38,C.redD,'right');
 
-    // Human Review → SWIFT (approved → down)
-    ctx.strokeStyle=rgba(C.blueD,0.2);
-    EXEC.forEach(function(e){
-      ctx.beginPath();
-      ctx.moveTo(rv.x,bbot(rv));
-      ctx.bezierCurveTo(rv.x,bbot(rv)+H*0.04,e.x,btop(e)-H*0.04,e.x,btop(e));
-      ctx.stroke();
-    });
-    label('approved',rv.x,bbot(rv)+H*0.028,C.tealD,'center');
+    // Human Review → Execution (approved, down-right)
+    ctx.strokeStyle=rgba(C.blueD,0.25);
+    ctx.beginPath();ctx.moveTo(brx(rv),bcy(rv));
+    ctx.bezierCurveTo(brx(rv)+W*0.04,bcy(rv),blx(ex),bcy(ex)+ex.h*0.3,blx(ex),bcy(ex)+ex.h*0.3);
+    ctx.stroke();
+    lbl('approved',brx(rv)+W*0.02,bcy(rv)-H*0.02,C.tealD);
 
     ctx.setLineDash([]);
   }
 
-  // ── PHASES
-  // 0  src → norm entry
-  // 1-4 through modules
-  // 3 = enable/disable — may reject (→ phase 8)
-  // 4 = stp centre
-  // 5a direct STP → TMS (most)
-  // 5b exceptions → review entry
-  // 6  in review — may reject (→ phase 8)
-  // 7  review → exec (SWIFT/bank)
-  // 8  REJECTED → reject queue
-  // 9  DONE
+  // PHASES:
+  // 0   src → norm
+  // 1-4 modules
+  // 3   en/dis — may reject (phase 8)
+  // 5   stp → exec (direct) OR stp → review (exception)
+  // 6   in exec (direct done) OR in review
+  // 7   review → exec (approved)
+  // 8   rejected → reject queue
+  // 9   done
 
   function Particle(si){
     var s=SRC[si];
@@ -244,29 +264,28 @@ document.addEventListener('DOMContentLoaded', function () {
     this.col=s.col;this.size=dpr*(2.2+Math.random()*0.8);
     this.sx=s.x+s.w/2;this.sy=bcy(s);
     this.tx=0;this.ty=0;
-    // fate: 15% reject at en/dis, 10% go to review (of which 30% reject), 75% direct TMS
     var r=Math.random();
-    if(r<0.15)       {this.rejectAt=3;this.directTMS=false;}
-    else if(r<0.25)  {this.rejectAt=6;this.directTMS=false;}  // goes to review, may reject
-    else             {this.rejectAt=99;this.directTMS=true;}   // direct TMS
+    // 15% reject at en/dis, 10% go to review (of those ~30% reject), 75% direct exec
+    if(r<0.15)      {this.rejectAt=3; this.direct=false;}
+    else if(r<0.25) {this.rejectAt=6; this.direct=false;}
+    else            {this.rejectAt=99;this.direct=true;}
     this.setTarget();
   }
 
   Particle.prototype.setTarget=function(){
-    var m0=MODS[0];
-    if(this.phase===0)            {this.tx=blx(m0);            this.ty=bcy(m0);}
+    var m0=MODS[0],ex=EXEC_BOX,rv=REVIEW_BOX,rq=REJECT_BOX;
+    if(this.phase===0)             {this.tx=blx(m0);  this.ty=bcy(m0);}
     else if(this.phase>=1&&this.phase<=4){var m=MODS[this.phase-1];this.tx=m.x;this.ty=bcy(m);}
     else if(this.phase===5){
-      if(this.directTMS)          {this.tx=blx(TMS_BOX);       this.ty=bcy(TMS_BOX);}
-      else                        {this.tx=blx(REVIEW_BOX);    this.ty=bcy(REVIEW_BOX);}
+      if(this.direct)              {this.tx=blx(ex);  this.ty=bcy(ex);}
+      else                         {this.tx=blx(rv);  this.ty=bcy(rv);}
     }
-    else if(this.phase===6)       {this.tx=REVIEW_BOX.x;       this.ty=bcy(REVIEW_BOX);}
-    else if(this.phase===7){
-      var e=EXEC[Math.floor(Math.random()*EXEC.length)];
-      this.tx=e.x;this.ty=btop(e);
+    else if(this.phase===6){
+      if(this.direct)              {this.tx=ex.x;     this.ty=bcy(ex);}  // arrive at center
+      else                         {this.tx=rv.x;     this.ty=bcy(rv);}
     }
-    else if(this.phase===8)       {this.tx=REJECT_BOX.x;       this.ty=bcy(REJECT_BOX);}
-    else if(this.phase==='tms')   {this.tx=TMS_BOX.x;          this.ty=bcy(TMS_BOX);}
+    else if(this.phase===7)        {this.tx=blx(ex);  this.ty=bcy(ex)+ex.h*0.3;}
+    else if(this.phase===8)        {this.tx=rq.x;     this.ty=bcy(rq);}
   };
 
   Particle.prototype.update=function(){
@@ -274,44 +293,39 @@ document.addEventListener('DOMContentLoaded', function () {
     if(this.t>=1){
       this.t=0;this.sx=this.tx;this.sy=this.ty;this.phase++;
 
-      // reject at enable/disable
       if(this.phase===4&&this.rejectAt===3){
         this.col=C.red;this.phase=8;
         MODS[2]._hl=1;
         rejectCount++;
         var r1=document.getElementById('rejectCount');if(r1)r1.textContent=rejectCount;
       }
-      // after stp (phase 5) — direct TMS or review
-      else if(this.phase===5){
-        if(this.directTMS){TMS_BOX._hl=1;}
-        // else goes to review
-      }
-      // done at TMS (direct path)
-      else if(this.phase===6&&this.directTMS){
-        wireCount++;
-        TMS_BOX._hl=1;
-        var wl=document.getElementById('wireCount');if(wl)wl.textContent=wireCount;
-        return true;
-      }
-      // reject at review
       else if(this.phase===7&&this.rejectAt===6){
         this.col=C.red;this.phase=8;
         REVIEW_BOX._hl=1;
         rejectCount++;
         var r2=document.getElementById('rejectCount');if(r2)r2.textContent=rejectCount;
       }
-      // done arriving at exec
-      else if(this.phase===8&&this.rejectAt===99){
+      // direct arrives at exec center
+      else if(this.phase===7&&this.direct){
+        EXEC_BOX._hl=1;
+        wireCount++;
+        var wl=document.getElementById('wireCount');if(wl)wl.textContent=wireCount;
+        return true;
+      }
+      // approved review arrives at exec
+      else if(this.phase===8&&!this.direct&&this.rejectAt===99){
+        EXEC_BOX._hl=1;
         wireCount++;
         var wl2=document.getElementById('wireCount');if(wl2)wl2.textContent=wireCount;
         return true;
       }
-      // done arriving at reject queue
+      // arrived at reject queue
       else if(this.phase===9){return true;}
       else if(this.phase>9){return true;}
 
       if(this.phase>=1&&this.phase<=4)MODS[this.phase-1]._hl=1;
-      if(this.phase===6&&!this.directTMS)REVIEW_BOX._hl=1;
+      if(this.phase===6&&!this.direct)REVIEW_BOX._hl=1;
+      if(this.phase===5&&this.direct) EXEC_BOX._hl=0.5;
       if(this.phase===8)REJECT_BOX._hl=1;
       this.setTarget();
     }
@@ -358,13 +372,12 @@ document.addEventListener('DOMContentLoaded', function () {
     ctx.clearRect(0,0,W,H);
     drawConnectors();
     drawPlatform();
-    [].concat(MODS,[REVIEW_BOX,REJECT_BOX,TMS_BOX]).forEach(function(b){if(b._hl)b._hl=Math.max(0,b._hl-0.025);});
+    [REVIEW_BOX,REJECT_BOX,EXEC_BOX].concat(MODS).forEach(function(b){if(b._hl)b._hl=Math.max(0,b._hl-0.025);});
     SRC.forEach(function(b){drawBox(b,0);});
     MODS.forEach(function(b){drawBox(b,b._hl);});
     drawBox(REJECT_BOX,REJECT_BOX._hl);
     drawReviewBox();
-    drawBox(TMS_BOX,TMS_BOX._hl);
-    EXEC.forEach(function(b){drawBox(b,0);});
+    drawExecBox();
     particles=particles.filter(function(p){var done=p.update();p.draw();return!done;});
     requestAnimationFrame(loop);
   }
