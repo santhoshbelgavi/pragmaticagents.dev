@@ -26,7 +26,7 @@ Reading that proposal made the answer clear. We were being asked to build the ha
 A modular, configuration-driven wire-processing platform on the infrastructure the firm already owned. The design principle from day one was horizontal scale without rework: new funds, teams, and standing settlement instructions are added as configuration, not code — no deployment, no developer involvement. Payment sources — REST APIs, flat files, same-day real-time payments — are normalized into a single shape before entering the processing core, and adding a new source type requires only configuration. Individual funds can be enabled or disabled at any granularity: per fund, per team, or any combination the business needs.
 
 <div class="arch-diagram">
-<canvas id="archCanvas" height="460"></canvas>
+<canvas id="archCanvas" height="500"></canvas>
 <div class="arch-controls">
   <button class="arch-btn active" id="btnApi">Fire REST API wire</button>
   <button class="arch-btn" id="btnFile">Fire flat file</button>
