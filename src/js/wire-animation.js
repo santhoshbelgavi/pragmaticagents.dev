@@ -66,14 +66,21 @@ document.addEventListener('DOMContentLoaded', function () {
       {id:'stp', label:'STP Core Engine',      sub:'Validate · match SSI · route to execution',    x:c2,y:padT+mh*3+gap*3, w:mw,h:mh,col:P.teal,  bg:P.tealBg,  ring:P.tealRing,  _hl:0,_pulse:0},
     ];
 
-    // ── Right column: reject queue + review = full availH
+    // ── Right column: Reject Queue (top), gap in middle for direct STP, Human Review (bottom)
     var rw=W*0.220;
-    var rqH=availH*0.28, rvH=availH*0.40;
-    var rcGap=availH-rqH-rvH;
-    REJECT_BOX={id:'rq',label:'Reject Queue',   sub:'Requires investigation',
-      x:c3,y:padT,            w:rw,h:rqH,col:P.red,   bg:P.redBg,   ring:P.redRing,   _hl:0,_pulse:0};
-    REVIEW_BOX={id:'rv',label:'Human Review',   sub:'Approves or rejects flagged wires',
-      x:c3,y:padT+rqH+rcGap, w:rw,h:rvH,col:P.orange,bg:P.orangeBg,ring:P.orangeRing,_hl:0,_pulse:0};
+    // STP core engine centre is at: padT + mh*3.5 + gap*3 (roughly 75% down availH)
+    // Direct STP line targets bcy(EXEC_BOX) = padT + availH*0.5
+    // So Human Review must sit BELOW the midpoint — bottom 35% of availH
+    var rqH = availH * 0.24;   // Reject Queue — compact at top
+    var rvH = availH * 0.32;   // Human Review — bottom third
+    var rvTop = padT + availH * 0.62;  // starts at 62% down — well below direct STP line
+
+    REJECT_BOX={id:'rq',label:'Reject Queue', sub:'Requires investigation',
+      x:c3, y:padT, w:rw, h:rqH,
+      col:P.red, bg:P.redBg, ring:P.redRing, _hl:0, _pulse:0};
+    REVIEW_BOX={id:'rv',label:'Human Review', sub:'Approves or rejects flagged wires',
+      x:c3, y:rvTop, w:rw, h:rvH,
+      col:P.orange, bg:P.orangeBg, ring:P.orangeRing, _hl:0, _pulse:0};
 
     // ── Execution: full height far right
     EXEC_BOX={id:'ex',label:'Execution',lines:['Kyriba TMS','SWIFT','Bank APIs'],
@@ -84,11 +91,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function buildPaths(){
     var en=MODS[2],stp=MODS[3],rv=REVIEW_BOX,rq=REJECT_BOX,ex=EXEC_BOX;
-    PATHS.direct    ={sx:br(stp),sy:bcy(stp),   cx1:br(stp)+W*0.06,cy1:bcy(stp),      cx2:bl(ex)-W*0.03,cy2:bcy(ex),          tx:bl(ex),ty:bcy(ex)};
-    PATHS.review    ={sx:br(stp),sy:bcy(stp)+H*0.03,cx1:br(stp)+W*0.05,cy1:bcy(stp)+H*0.06,cx2:bl(rv)-W*0.03,cy2:bcy(rv), tx:bl(rv),ty:bcy(rv)};
-    PATHS.reject_en ={sx:br(en), sy:bcy(en),    cx1:br(en)+W*0.07, cy1:bcy(en),       cx2:bl(rq)-W*0.02,cy2:bcy(rq),          tx:bl(rq),ty:bcy(rq)};
-    PATHS.reject_rv ={sx:rv.x,   sy:bt(rv),     cx1:rv.x,          cy1:bt(rv)-H*0.05, cx2:rq.x,         cy2:bb(rq)+H*0.05,   tx:rq.x,  ty:bb(rq)};
-    PATHS.approved  ={sx:br(rv), sy:bcy(rv),    cx1:br(rv)+W*0.03, cy1:bcy(rv),       cx2:bl(ex)-W*0.02,cy2:bcy(ex)+ex.h*0.3,tx:bl(ex),ty:bcy(ex)+ex.h*0.3};
+    // Direct STP: STP core → Execution, routes through the clear middle gap (top half of exec)
+    PATHS.direct    ={sx:br(stp),sy:bcy(stp),   cx1:br(stp)+W*0.07,cy1:bcy(stp),      cx2:bl(ex)-W*0.03,cy2:ex.y+ex.h*0.35, tx:bl(ex),ty:ex.y+ex.h*0.35};
+    // Exceptions: STP → Human Review (bottom)
+    PATHS.review    ={sx:br(stp),sy:bcy(stp)+H*0.02,cx1:br(stp)+W*0.05,cy1:bcy(stp)+H*0.08,cx2:bl(rv)-W*0.03,cy2:bcy(rv), tx:bl(rv),ty:bcy(rv)};
+    // Enable/Disable → Reject Queue (top right)
+    PATHS.reject_en ={sx:br(en), sy:bcy(en),    cx1:br(en)+W*0.07, cy1:bcy(en),       cx2:bl(rq)-W*0.02,cy2:bcy(rq),  tx:bl(rq),ty:bcy(rq)};
+    // Review → Reject Queue (up — review is now lower, reject is at top)
+    PATHS.reject_rv ={sx:rv.x,   sy:bt(rv),     cx1:rv.x,          cy1:bt(rv)-H*0.08, cx2:rq.x,         cy2:bb(rq)+H*0.04, tx:rq.x,ty:bb(rq)};
+    // Review → Execution approved (right into lower portion of exec)
+    PATHS.approved  ={sx:br(rv), sy:bcy(rv),    cx1:br(rv)+W*0.04, cy1:bcy(rv),       cx2:bl(ex)-W*0.02,cy2:ex.y+ex.h*0.72, tx:bl(ex),ty:ex.y+ex.h*0.72};
   }
 
   function pathPoint(p,t){
@@ -147,20 +159,20 @@ document.addEventListener('DOMContentLoaded', function () {
       ctx.strokeStyle=rgba(b.col,b._pulse*0.35);ctx.lineWidth=dpr*1.5;ctx.stroke();
     }
 
-    // Person icon — scaled to box size
-    var cx=b.x, cy=b.y+b.h*0.27, cr=Math.min(b.h*0.14,b.w*0.12);
+    // Person icon — small, top of box
+    var cx=b.x, cy=b.y+b.h*0.22, cr=Math.min(b.h*0.09, b.w*0.08);
     ctx.beginPath();ctx.arc(cx,cy,cr,0,Math.PI*2);
-    ctx.fillStyle=rgba(b.col,0.65);ctx.fill();
-    ctx.beginPath();ctx.arc(cx,cy+cr*2.0,cr*1.6,Math.PI,0);
-    ctx.fillStyle=rgba(b.col,0.32);ctx.fill();
+    ctx.fillStyle=rgba(b.col,0.55);ctx.fill();
+    ctx.beginPath();ctx.arc(cx,cy+cr*2.0,cr*1.5,Math.PI,0);
+    ctx.fillStyle=rgba(b.col,0.28);ctx.fill();
 
     ctx.fillStyle=b.col;
     ctx.font='700 '+fs(14)+'px -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif';
     ctx.textAlign='center';ctx.textBaseline='middle';
-    ctx.fillText(b.label,b.x,b.y+b.h*0.74);
+    ctx.fillText(b.label,b.x,b.y+b.h*0.60);
     ctx.fillStyle=P.muted;
     ctx.font='400 '+fs(11)+'px -apple-system,BlinkMacSystemFont,"Inter","Segoe UI",sans-serif';
-    ctx.fillText(b.sub,b.x,b.y+b.h*0.88);
+    ctx.fillText(b.sub,b.x,b.y+b.h*0.80);
   }
 
   function drawExecNode(){
@@ -271,12 +283,12 @@ document.addEventListener('DOMContentLoaded', function () {
     // STP → Execution (direct — thicker, solid)
     bezLine(PATHS.direct,P.blue,2.0,false);
     arrowHead(PATHS.direct,P.blue);
-    edgePill('direct STP',br(stp)+W*0.048,bcy(stp)-H*0.026,P.blue);
+    edgePill('direct STP — most wires',br(stp)+W*0.052,bcy(stp)-H*0.030,P.blue);
 
     // STP → Review
     bezLine(PATHS.review,P.orange,0.9,true);
     arrowHead(PATHS.review,P.orange);
-    edgePill('exceptions',br(stp)+W*0.042,bcy(stp)+H*0.058,P.orange);
+    edgePill('exceptions',br(stp)+W*0.042,bcy(stp)+H*0.072,P.orange);
 
     // rv → reject queue
     bezLine(PATHS.reject_rv,P.red,0.9,true);
