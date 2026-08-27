@@ -50,23 +50,13 @@ SanthoshIAS runs at port 7700 and presents a single clean API to every consumer 
 
 **MCP output interface.** SanthoshIAS exposes an MCP (Model Context Protocol) interface so AI assistants can query market data as a tool call. The design boundary was deliberate: MCP is right for tool-use output, wrong for high-throughput ingest where protocol overhead is unacceptable. The interface honours that boundary.
 
-## Sentinel — the admin and health dashboard
+## Sentinel — the dashboard that keeps the stack alive
 
-As the number of services in the stack grew — SanthoshIAS, Moneta FastAPI, FlowDeck, APEX, the Rust gateway itself — managing them across restarts, debugging connection failures, and monitoring provider health became its own problem.
+As the stack grew — SanthoshIAS, Moneta, FlowDeck, APEX, the ThetaData terminal — keeping all of it running became its own job. Services died on sleep/wake and didn't come back. One service starving another at market open turned into a cascade. Debugging a data issue meant reading five sets of logs to reconstruct what happened.
 
-Sentinel is the solution: a self-learning admin dashboard built specifically to monitor and manage the full personal stack.
+Sentinel is the answer to that: a single admin and health dashboard, on port 7799, that supervises every service in the stack, restarts them intelligently when they fail, and turns every recurring failure into a codified playbook it can run without me. If SanthoshIAS is the service layer, Sentinel is the operations layer — one place to see what's happening, one place to fix it.
 
-**What Sentinel does:**
-
-→ **Service health monitoring** — real-time status of every service in the stack. SanthoshIAS, FastAPI backends, provider connections, DuckDB — all visible in one view. Green, yellow, or red. No guessing which service is down when something breaks.
-
-→ **Provider status board** — live connection status for all six data providers. Which are connected, which are rate-limited, which are in fallback mode. When ThetaData goes down, Sentinel shows it before the first app error surfaces.
-
-→ **Start/stop lifecycle management** — controlled startup and shutdown for each service, from one interface. No SSH, no terminal juggling. Start the full stack in the right order; stop individual services for debugging without taking everything down.
-
-→ **Self-learning** — Sentinel observes patterns over time. Which providers fail most often and when. Which services take longest to start. Which error classes recur. Over time it builds a picture of the stack's behaviour that makes debugging faster — you arrive at the right hypothesis sooner because the history is visible.
-
-→ **Debug surface** — structured logging and connection traces per provider. When a request fails at SanthoshIAS, Sentinel shows which provider was tried, what it returned, and how long each step took. The debugging that used to require reading raw logs now has a UI.
+[Read the Sentinel case study →](/work/sentinel/)
 
 ## What it saves
 
