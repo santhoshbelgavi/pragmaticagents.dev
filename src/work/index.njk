@@ -11,7 +11,7 @@ permalink: /work/
 
     {% for item in collections.work | sort(attribute='data.order') %}
     <div class="card">
-      <span class="card-title">{{ item.data.title }}</span>
+      <span class="card-title">{{ item.data.title | accentize | safe }}</span>
       <span class="card-context">{{ item.data.context }}</span>
       <p>{{ item.data.description }}</p>
       <a class="read-link" href="{{ item.url }}">Read →</a><span class="card-readtime">{{ item.templateContent | readingTime }} min read</span>

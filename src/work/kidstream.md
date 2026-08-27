@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "KidStream — curated, self-hosted media for kids. No algorithm, no ads"
+title: "KidStream — curated, self-hosted media for kids. **No algorithm, no ads**"
 context: "Personal infrastructure · Pinchflat · Jellyfin · Swiftfin · Apple TV · NAS"
 order: 8
 description: "A self-hosted children's media stack that runs on home infrastructure. Allowlisted content only, no recommendation algorithm, no ads, no tracking. The local-first philosophy applied to the toughest user base there is."

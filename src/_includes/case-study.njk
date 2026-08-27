@@ -2,7 +2,7 @@
 layout: base.njk
 ---
 <div class="wrap" style="padding-top: 70px;">
-  <h1 class="case-title">{{ title }}</h1>
+  <h1 class="case-title">{{ title | accentize | safe }}</h1>
   <span class="case-context">{{ context }}</span>
   <div class="read-time">{{ content | readingTime }} min read</div>
 

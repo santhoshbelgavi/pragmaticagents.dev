@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "Moneta — a personal finance platform I actually trust"
+title: "Moneta — a personal finance platform **I actually trust**"
 context: "Self-hosted · FastAPI · DuckDB · React 19 · Rust · NAS · 2023–present"
 order: 4
 description: "A self-hosted personal finance platform built because the alternatives either died, cost money while owning your data, or did the math wrong. 7,000+ transactions, 3 years of history, running on home infrastructure."

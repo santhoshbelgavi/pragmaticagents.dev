@@ -6,6 +6,13 @@ export default function (eleventyConfig) {
     new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
   );
   eleventyConfig.addFilter("isoDate", (d) => new Date(d).toISOString().split("T")[0]);
+  const stripAccent = (s) => String(s).replace(/\*\*([^*]+)\*\*/g, "$1");
+  eleventyConfig.addFilter("plainText", stripAccent);
+  eleventyConfig.addFilter("accentize", (s) =>
+    stripAccent(String(s)).length === String(s).length
+      ? String(s)
+      : String(s).replace(/\*\*([^*]+)\*\*/g, '<span class="hl">$1</span>')
+  );
   eleventyConfig.addFilter("readingTime", (html) => {
     const words = String(html).replace(/<[^>]+>/g, " ").split(/\s+/).filter(Boolean).length;
     return Math.max(1, Math.round(words / 200));

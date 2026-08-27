@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "FlowDeck — replacing a paid options-flow SaaS with 800 lines of Rust"
+title: "FlowDeck — replacing a paid options-flow SaaS with **800 lines of Rust**"
 context: "Personal infrastructure · Rust · flowengine crate · NAS · 2024–present"
 order: 3
 description: "The build-when-warranted philosophy applied at home. A paid options-flow analytics subscription cancelled, replaced with a purpose-built Rust platform that does more, costs nothing monthly, and runs on infrastructure I already own."

@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "SanthoshIAS — personal Infrastructure-as-a-Service for a multi-app development environment"
+title: "SanthoshIAS — personal **Infrastructure-as-a-Service** for a multi-app development environment"
 context: "Personal infrastructure · Rust · DataResolver · DuckDB · MCP · 2024–present"
 order: 5
 description: "Built from a simple observation: every app I developed needed the same data providers, and each one was reimplementing the same start/stop, auth, and failover logic independently. SanthoshIAS is the service layer I extracted — one provider, one contract, all apps."

@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "Teaching an AI agent to read fund inception documents"
+title: "Teaching an AI agent to **read fund inception documents**"
 context: "Private markets fund operations · LemonEdge · 2025–present"
 order: 2
 description: "Building a Claude-powered agent that reads fund legal documents and automates LemonEdge fund-accounting setup — eliminating weeks of manual configuration per fund launch."

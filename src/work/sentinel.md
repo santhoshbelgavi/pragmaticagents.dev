@@ -1,7 +1,7 @@
 ---
 layout: case-study.njk
 tags: work
-title: "Sentinel — a self-learning admin dashboard for a personal service stack"
+title: "Sentinel — a **self-learning** admin dashboard for a personal service stack"
 context: "Personal infrastructure · Node · launchd · playbooks · 2026–present"
 order: 6
 description: "Built when the stack got big enough that keeping it running became a job of its own. Sentinel supervises every service, restarts them intelligently when they fail, and turns each recurring failure into a playbook it runs automatically the next time."
