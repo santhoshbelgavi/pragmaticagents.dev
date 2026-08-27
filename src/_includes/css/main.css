@@ -1,4 +1,4 @@
-/* Sora — display / headings */
+/* Sora - display / headings */
 @font-face {
   font-family: "Sora";
   src: url("/fonts/sora-latin.woff2") format("woff2");
@@ -11,7 +11,7 @@
   font-weight: 600 800; font-style: normal; font-display: swap;
   unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
 }
-/* Inter — body / UI */
+/* Inter - body / UI */
 @font-face {
   font-family: "Inter";
   src: url("/fonts/inter-latin.woff2") format("woff2");
@@ -146,7 +146,7 @@ h1 {
   text-wrap: balance;
 }
 
-/* accent highlight for key phrases — same ochre as the .dev in the wordmark */
+/* accent highlight for key phrases - same ochre as the .dev in the wordmark */
 .hl { color: var(--accent); font-weight: 600; }
 .card p .hl,
 .tldr p .hl,
