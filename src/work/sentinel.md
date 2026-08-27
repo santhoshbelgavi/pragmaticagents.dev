@@ -2,11 +2,12 @@
 layout: case-study.njk
 tags: work
 title: "Sentinel — a self-learning admin dashboard for a personal service stack"
-context: "Personal infrastructure · Node · launchd · playbooks · Port 7799 · 2026–present"
+context: "Personal infrastructure · Node · launchd · playbooks · 2026–present"
 order: 6
 description: "Built when the stack got big enough that keeping it running became a job of its own. Sentinel supervises every service, restarts them intelligently when they fail, and turns each recurring failure into a playbook it runs automatically the next time."
+tldr: "Once the stack had six-plus services depending on each other, keeping it alive became its own job. Sentinel is one dashboard that health-checks every service, restarts them intelligently, and turns each recurring failure into a playbook it runs automatically — so I stopped being the babysitter."
 stats:
-  - { n: "Port 7799", label: "one view of the whole stack" }
+  - { n: "1", label: "dashboard for the whole stack" }
   - { n: "6", label: "services supervised" }
   - { n: "launchd", label: "native, survives reboot" }
   - { n: "Playbooks", label: "recurring failures auto-fixed" }
@@ -14,7 +15,7 @@ stats:
 
 ## The problem
 
-[SanthoshIAS](/work/santhoshias/) solved the data-provider problem: one service layer, one contract, all apps. But solving it created a new one. The stack now had real depth — SanthoshIAS at port 7700, the Moneta API and web frontend, FlowDeck, APEX's FastAPI backend and React frontend, and a ThetaData terminal underneath all of it. Six-plus long-running services on one machine, each depending on the others.
+[SanthoshIAS](/work/santhoshias/) solved the data-provider problem: one service layer, one contract, all apps. But solving it created a new one. The stack now had real depth — SanthoshIAS itself, the Moneta API and web frontend, FlowDeck, APEX's FastAPI backend and React frontend, and a ThetaData terminal underneath all of it. Six-plus long-running services on one machine, each depending on the others.
 
 Three failure patterns kept recurring:
 
@@ -28,9 +29,9 @@ None of these were hard problems individually. Together, they meant the stack ne
 
 ## What Sentinel is
 
-Sentinel is a single admin and health dashboard on port 7799. It runs as a launchd job, starts on boot, and does three things.
+Sentinel is a single admin and health dashboard. It runs as a launchd job, starts on boot, and does three things.
 
-**It shows the stack.** Every service in one view — SanthoshIAS, both Moneta services, FlowDeck, APEX backend and frontend, the ThetaData terminal. Green, yellow, red. Not "is the process alive" but "is this service actually doing its job" — for SanthoshIAS that means the options tape is fresh, not just that port 7700 is listening.
+**It shows the stack.** Every service in one view — SanthoshIAS, both Moneta services, FlowDeck, APEX backend and frontend, the ThetaData terminal. Green, yellow, red. Not "is the process alive" but "is this service actually doing its job" — for SanthoshIAS that means the options tape is fresh, not just that the process is up.
 
 **It manages lifecycle.** Start, stop, and restart any service from one interface, in the right dependency order. No SSH, no terminal juggling, no remembering that APEX's backend has to be up before its frontend is useful.
 

@@ -4,6 +4,7 @@ layout: base.njk
 <div class="wrap" style="padding-top: 70px;">
   <h1 class="case-title">{{ title }}</h1>
   <span class="case-context">{{ context }}</span>
+  <div class="read-time">{{ content | readingTime }} min read</div>
 
   <div class="stat-strip">
     {% for stat in stats %}
@@ -13,6 +14,13 @@ layout: base.njk
     </div>
     {% endfor %}
   </div>
+
+  {% if tldr %}
+  <div class="tldr">
+    <span class="tldr-tag">TL;DR</span>
+    <p>{{ tldr }}</p>
+  </div>
+  {% endif %}
 
   <div class="case-body">
     {{ content | safe }}

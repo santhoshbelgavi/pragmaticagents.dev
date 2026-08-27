@@ -5,6 +5,7 @@ title: "FlowDeck — replacing a paid options-flow SaaS with 800 lines of Rust"
 context: "Personal infrastructure · Rust · flowengine crate · NAS · 2024–present"
 order: 3
 description: "The build-when-warranted philosophy applied at home. A paid options-flow analytics subscription cancelled, replaced with a purpose-built Rust platform that does more, costs nothing monthly, and runs on infrastructure I already own."
+tldr: "I cancelled a paid options-flow analytics subscription and replaced it with roughly 800 lines of Rust running on hardware I already own. It does more than the SaaS did, costs nothing monthly, and every test is green."
 stats:
   - { n: "~800", label: "lines of Rust at the core" }
   - { n: "$0/mo", label: "vs paid SaaS subscription" }

@@ -5,10 +5,11 @@ title: "SanthoshIAS — personal Infrastructure-as-a-Service for a multi-app dev
 context: "Personal infrastructure · Rust · DataResolver · DuckDB · MCP · 2024–present"
 order: 5
 description: "Built from a simple observation: every app I developed needed the same data providers, and each one was reimplementing the same start/stop, auth, and failover logic independently. SanthoshIAS is the service layer I extracted — one provider, one contract, all apps."
+tldr: "Every app I built needed the same data providers, and each one re-implemented its own auth, failover, and start/stop logic. SanthoshIAS is the service layer I extracted — one contract, six providers, all apps. New apps get every provider for free; provider bugs get fixed once, not once per app."
 stats:
   - { n: "6", label: "data providers unified" }
   - { n: "3", label: "apps served (Moneta · FlowDeck · APEX)" }
-  - { n: "Port 7700", label: "one endpoint for everything" }
+  - { n: "1", label: "endpoint for the whole stack" }
   - { n: "0", label: "duplicate auth logic across apps" }
 ---
 
@@ -32,7 +33,7 @@ SanthoshIAS is that service layer. The name is literal: **IAS — Infrastructure
 
 ## What it does
 
-SanthoshIAS runs at port 7700 and presents a single clean API to every consumer in the stack. Every application — Moneta, FlowDeck, APEX — makes calls to SanthoshIAS. SanthoshIAS decides which provider answers, in which order, and what to do when a provider fails.
+SanthoshIAS presents a single clean API to every consumer in the stack. Every application — Moneta, FlowDeck, APEX — makes calls to SanthoshIAS. SanthoshIAS decides which provider answers, in which order, and what to do when a provider fails.
 
 <div class="arch-diagram">
 <canvas id="santhoshiasCanvas" height="380"></canvas>
@@ -54,13 +55,13 @@ SanthoshIAS runs at port 7700 and presents a single clean API to every consumer 
 
 As the stack grew — SanthoshIAS, Moneta, FlowDeck, APEX, the ThetaData terminal — keeping all of it running became its own job. Services died on sleep/wake and didn't come back. One service starving another at market open turned into a cascade. Debugging a data issue meant reading five sets of logs to reconstruct what happened.
 
-Sentinel is the answer to that: a single admin and health dashboard, on port 7799, that supervises every service in the stack, restarts them intelligently when they fail, and turns every recurring failure into a codified playbook it can run without me. If SanthoshIAS is the service layer, Sentinel is the operations layer — one place to see what's happening, one place to fix it.
+Sentinel is the answer to that: a single admin and health dashboard that supervises every service in the stack, restarts them intelligently when they fail, and turns every recurring failure into a codified playbook it can run without me. If SanthoshIAS is the service layer, Sentinel is the operations layer — one place to see what's happening, one place to fix it.
 
 [Read the Sentinel case study →](/work/sentinel/)
 
 ## What it saves
 
-**Development time — directly.** Every new app in the stack gets all six providers at the point of integration. No authentication code to write, no retry logic to implement, no session management to debug. Connect to port 7700, call the endpoint, get data.
+**Development time — directly.** Every new app in the stack gets all six providers at the point of integration. No authentication code to write, no retry logic to implement, no session management to debug. Point the app at the service, call the endpoint, get data.
 
 **Debug time — significantly.** Before SanthoshIAS and Sentinel, debugging a data issue meant checking each app's logs, tracing each provider's responses, and reconstructing what happened from scattered output. Now it's one dashboard, one view, one trace per request. The time to root-cause a data issue dropped from an hour to minutes.
 

@@ -5,6 +5,7 @@ title: "$350B in wires, 0% to 99%+ STP — rigorous analysis, right architecture
 context: "A top PE firm · Treasury & Middle Office · 2022–2026"
 order: 1
 description: "How a purpose-built wire automation platform on Kyriba, SWIFT, and Goldman Sachs Transaction Banking rails took a top PE firm from manual wire operations to 99%+ straight-through processing."
+tldr: "A top PE firm ran wires by hand. I did the analysis, chose the architecture — Kyriba + SWIFT + Goldman rails, vendor over custom build — and took straight-through processing from near zero to 99%+ across $350B in wires. The $500K saving was the vendor decision, not the tooling."
 stats:
   - { n: "$350B+", label: "wires since inception" }
   - { n: "$500K+", label: "saved — vendor decision" }

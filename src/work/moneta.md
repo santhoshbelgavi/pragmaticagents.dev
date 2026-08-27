@@ -5,6 +5,7 @@ title: "Moneta — a personal finance platform I actually trust"
 context: "Self-hosted · FastAPI · DuckDB · React 19 · Rust · NAS · 2023–present"
 order: 4
 description: "A self-hosted personal finance platform built because the alternatives either died, cost money while owning your data, or did the math wrong. 7,000+ transactions, 3 years of history, running on home infrastructure."
+tldr: "Every personal-finance app I tried either shut down, charged me to hold my own data, or got the math wrong. So I built my own: self-hosted, 7,000+ transactions, three years of history, running on my NAS — and I actually trust the numbers."
 stats:
   - { n: "7,000+", label: "transactions processed" }
   - { n: "6", label: "brokerage accounts" }

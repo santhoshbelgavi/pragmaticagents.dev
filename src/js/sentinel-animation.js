@@ -32,16 +32,16 @@ document.addEventListener('DOMContentLoaded', function () {
     var padT=H*0.06,availH=H-padT-H*0.06,gap=H*0.02;
     var c1=W*0.08,c2=W*0.42,c3=W*0.80;
 
-    SENTINEL={id:'sentinel',label:'Sentinel',sub:'admin dashboard · port 7799',x:c1,y:padT+availH*0.24,w:W*0.16,h:availH*0.52,col:P.amber,bg:P.amberBg,ring:P.amberRing,_hl:0,_pulse:0};
+    SENTINEL={id:'sentinel',label:'Sentinel',sub:'admin dashboard',x:c1,y:padT+availH*0.24,w:W*0.16,h:availH*0.52,col:P.amber,bg:P.amberBg,ring:P.amberRing,_hl:0,_pulse:0};
 
     var sh=(availH-gap*5)/6,sw=W*0.20;
     var defs=[
-      ['ias','SanthoshIAS','port 7700 · data layer',true],
+      ['ias','SanthoshIAS','data service layer',true],
       ['mapi','Moneta API','launchd · finance backend',true],
       ['mweb','Moneta Web','launchd · finance frontend',true],
       ['fd','FlowDeck','flow analytics',true],
-      ['apexapi','APEX API','port 8010 · Sentinel-supervised',false],
-      ['apexui','APEX UI','port 5175 · trading frontend',false],
+      ['apexapi','APEX API','Sentinel-supervised',false],
+      ['apexui','APEX UI','trading frontend',false],
     ];
     SERVICES=defs.map(function(d,i){return {id:d[0],label:d[1],sub:d[2],native:d[3],x:c2,y:padT+i*(sh+gap),w:sw,h:sh,col:P.slate,bg:P.slateBg,ring:P.slateRing,_hl:0,_pulse:0,sick:0};});
 
@@ -90,13 +90,13 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   var TIPS={
-    sentinel:'Sentinel runs as a launchd job on port 7799 and starts on boot. One view of every service in the stack — is each one actually doing its job, not just is the process alive. Start, stop, restart from one interface, in dependency order.',
-    ias:'SanthoshIAS, port 7700 — the data-provider service layer. Sentinel checks that the options tape is fresh, not just that the port is listening. Runs as a native launchd unit.',
+    sentinel:'Sentinel runs as a launchd job and starts on boot. One view of every service in the stack — is each one actually doing its job, not just is the process alive. Start, stop, restart from one interface, in dependency order.',
+    ias:'SanthoshIAS — the data-provider service layer. Sentinel checks that the options tape is fresh, not just that the process is up. Runs as a native launchd unit.',
     mapi:'Moneta API — finance backend. Real launchd unit (com.belgavi.monetaapi); the OS keeps it alive, Sentinel reads and controls its state.',
     mweb:'Moneta Web — finance frontend. Real launchd unit (com.belgavi.monetaweb).',
     fd:'FlowDeck — flow analytics frontend. Supervised for lifecycle and health alongside the rest of the stack.',
-    apexapi:'APEX API, port 8010. Loads a 225-variable secrets file that has no business in a launchd plist, so Sentinel runs it under its own supervisor with the same guarantees.',
-    apexui:'APEX UI, port 5175 — the React trading frontend. Brought up after the APEX API is ready.',
+    apexapi:'APEX API. Loads a 225-variable secrets file that has no business in a launchd plist, so Sentinel runs it under its own supervisor with the same guarantees.',
+    apexui:'APEX UI — the React trading frontend. Brought up after the APEX API is ready.',
     launchd:'Native OS supervision. Where a service can be a launchd unit, it is — SanthoshIAS and both Moneta services. Survives reboot without Sentinel.',
     playbooks:'Codified condition → action rules. fd_tape_freshness: when the SanthoshIAS tape is stale for 18 consecutive polls, Sentinel restarts the feed automatically — before the first app error. Every recurring failure becomes a playbook.',
   };

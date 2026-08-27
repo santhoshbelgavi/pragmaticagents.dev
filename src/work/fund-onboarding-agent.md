@@ -5,6 +5,7 @@ title: "Teaching an AI agent to read fund inception documents"
 context: "Private markets fund operations · LemonEdge · 2025–present"
 order: 2
 description: "Building a Claude-powered agent that reads fund legal documents and automates LemonEdge fund-accounting setup — eliminating weeks of manual configuration per fund launch."
+tldr: "Every fund launch meant weeks of hand-copying terms from legal documents into LemonEdge. I am building a Claude-powered agent that reads the inception documents and does the setup itself — targeting weeks down to days. In active development."
 stats:
   - { n: "Weeks → days", label: "fund setup time (target)" }
   - { n: "LemonEdge", label: "fund accounting platform" }

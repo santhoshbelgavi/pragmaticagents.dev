@@ -151,6 +151,38 @@ h1 {
   margin-bottom: 40px;
 }
 
+.read-time {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  letter-spacing: 0.02em;
+  margin-top: 10px;
+}
+.tldr {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 18px 20px;
+  margin: 0 0 40px;
+}
+.tldr-tag {
+  display: block;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--accent);
+  margin-bottom: 8px;
+}
+.tldr p {
+  color: var(--secondary);
+  font-size: 16px;
+  line-height: 1.6;
+  max-width: 62ch;
+  margin: 0;
+}
+
 /* stat strip */
 .stat-strip {
   display: grid;

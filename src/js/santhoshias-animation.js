@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
 
     // DataResolver gateway
-    RESOLVER={id:'resolver',label:'DataResolver',sub:'priority-chain routing · port 7700',x:c2,y:padT+availH*0.25,w:W*0.16,h:availH*0.5,col:P.amber,bg:P.amberBg,ring:P.amberRing,_hl:0,_pulse:0};
+    RESOLVER={id:'resolver',label:'DataResolver',sub:'priority-chain routing',x:c2,y:padT+availH*0.25,w:W*0.16,h:availH*0.5,col:P.amber,bg:P.amberBg,ring:P.amberRing,_hl:0,_pulse:0};
 
     // Providers (priority order top to bottom)
     var ph=(availH-gap*5)/6,pw=W*0.14;
