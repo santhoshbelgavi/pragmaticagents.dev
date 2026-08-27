@@ -251,6 +251,12 @@ h1 {
   font-weight: 600;
   font-size: 14.5px;
 }
+.card-readtime {
+  font-family: var(--mono);
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-left: 14px;
+}
 
 .project-grid {
   display: grid;
