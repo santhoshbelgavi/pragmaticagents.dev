@@ -1,32 +1,38 @@
 ---
 layout: case-study.njk
 tags: work
-title: "SanthoshIAS — a Rust gateway that makes six data providers look like one"
-context: "Personal infrastructure · Rust · DataResolver · DuckDB · 2024–present"
+title: "SanthoshIAS — personal Infrastructure-as-a-Service for a multi-app development environment"
+context: "Personal infrastructure · Rust · DataResolver · DuckDB · MCP · 2024–present"
 order: 5
-description: "A financial data gateway with priority-chain failover across six market data providers. One clean API for every consumer. The same integration architecture pattern used in institutional systems, pressure-tested at personal scale."
+description: "Built from a simple observation: every app I developed needed the same data providers, and each one was reimplementing the same start/stop, auth, and failover logic independently. SanthoshIAS is the service layer I extracted — one provider, one contract, all apps."
 stats:
   - { n: "6", label: "data providers unified" }
-  - { n: "Rust", label: "zero-cost abstractions" }
-  - { n: "Port 7700", label: "one endpoint, all providers" }
-  - { n: "0", label: "consumer changes when a provider fails" }
+  - { n: "3", label: "apps served (Moneta · FlowDeck · APEX)" }
+  - { n: "Port 7700", label: "one endpoint for everything" }
+  - { n: "0", label: "duplicate auth logic across apps" }
 ---
 
-## What is SanthoshIAS?
+## The origin story
 
-SanthoshIAS is a Rust-built financial data gateway that sits between my personal stack — Moneta, FlowDeck, APEX — and six market data providers: ThetaData, QuantData, DXLink, Alpaca, IBKR, and Tastyworks. Every consumer in the stack makes one call to port 7700. SanthoshIAS decides which provider answers it, in which order, and what to do if a provider is down or rate-limited.
+When I started building personal finance and trading apps, I made the same mistake most developers make: each application owned its own data connections.
 
-The name is IAS — Intelligent Aggregation Service. It's not ironic.
+Moneta talked directly to Alpaca and yfinance. FlowDeck connected directly to ThetaData and QuantData. APEX had its own IBKR and Tastyworks connectors. Each one implemented its own authentication flow, its own session management, its own start/stop lifecycle, its own retry logic, and its own response parsing.
 
-## Why?
+Every time I added a new data provider, I added it to every app that needed it. Every time a provider changed an API, I fixed the bug in every app independently. Every time one provider went down, each app's fallback strategy was different — some graceful, some not.
 
-Managing market data providers is a tax on every system that needs them. Each provider has a different API shape, different authentication flow, different rate limits, different reliability characteristics, and different coverage gaps. When you build a system that talks directly to providers, you couple every consumer to every provider's quirks. Add a new provider, change every consumer. A provider goes down, every consumer needs a fallback strategy.
+The pattern was obvious once I saw it clearly: I was building the same infrastructure layer three times over, in three different places, with three different levels of care.
 
-This is the same integration problem that exists at institutional scale — a fund administrator routing settlement data across Swift, Kyriba, and multiple bank APIs, or a trading desk aggregating market data from Bloomberg, Refinitiv, and proprietary feeds. The solution at institutional scale is a normalisation and routing layer. SanthoshIAS is that layer, built for a personal stack, in Rust.
+## The insight
 
-## Architecture
+The cloud computing model solved this problem at industrial scale decades ago. Infrastructure-as-a-Service providers — AWS, Azure, GCP — abstract the underlying hardware behind a clean API. Consumers don't manage servers; they call a service. The infrastructure complexity is someone else's problem.
 
-The core design is a **DataResolver** with priority-chain routing. Each data type (options chain, equity price, volume profile, account positions, order routing) has a ranked list of providers. SanthoshIAS tries the first, falls through to the second on failure, and so on — automatically, with no consumer involvement.
+The same principle applies at personal development scale. If you have multiple applications that all need the same underlying resources — market data providers, broker connections, macro data feeds — the right answer is a service layer, not repeated per-app integration.
+
+SanthoshIAS is that service layer. The name is literal: **IAS — Infrastructure-as-a-Service**, personal edition. A service provider within my own development environment, run by me, for my apps, giving me the same benefits cloud providers give their customers: consistency, reliability, debuggability, and a single place to fix things when they break.
+
+## What it does
+
+SanthoshIAS runs at port 7700 and presents a single clean API to every consumer in the stack. Every application — Moneta, FlowDeck, APEX — makes calls to SanthoshIAS. SanthoshIAS decides which provider answers, in which order, and what to do when a provider fails.
 
 <div class="arch-diagram">
 <canvas id="santhoshiasCanvas" height="380"></canvas>
@@ -34,22 +40,46 @@ The core design is a **DataResolver** with priority-chain routing. Each data typ
 </div>
 <script src="/js/santhoshias-animation.js"></script>
 
-**Provider connectors — six built, one painful.** The Tastyworks connector required six bug fixes before it worked correctly: a missing `client_id` in the OAuth body, wrong `expires_in` handling, an unconditional refresh loop that re-authenticated on every request, per-request client instantiation creating unnecessary overhead, a wrong auth header format, and a spurious legacy fallback that silently corrupted responses. Every one of these was a well-hidden bug that a dynamic language would have let through quietly. Rust's type system surfaced four of the six at compile time.
+**The DataResolver.** The core of SanthoshIAS is a priority-chain DataResolver — a Rust struct that holds an ordered list of providers for each data type. When a request arrives, it tries the first provider. If that provider fails, times out, or rate-limits, it falls through to the second. And so on. The consumer never knows which provider answered. The consumer never needs to.
 
-**DuckDB analytical layer.** SanthoshIAS writes resolved data to a DuckDB instance for historical queries. Moneta, APEX, and FlowDeck can query historical market data without re-fetching from providers — reducing API calls and keeping data consistent across the stack.
+**Six providers, one interface.** ThetaData (options, P1), QuantData (vol surface and flow, P2), DXLink (streaming, P3), Alpaca (equity and paper trading, P4), IBKR (live broker, P5), Tastyworks (options broker, P6). Each provider has a dedicated connector with its own authentication logic, session lifecycle, and response normalisation. That complexity lives in SanthoshIAS, once, not in every app.
 
-**MCP output interface.** SanthoshIAS exposes an MCP (Model Context Protocol) interface for AI assistant integration. The architecture decision was deliberate: MCP is correct for tool-use output — Claude or another model asking for market data — but wrong for high-throughput ingest, where the protocol overhead is unacceptable. The boundary is clear and the interface honours it.
+**The Tastyworks lesson.** The Tastyworks connector required six separate bug fixes before it worked: a missing `client_id` in the OAuth body, wrong `expires_in` handling, an unconditional refresh loop re-authenticating on every request, per-request client instantiation, a wrong auth header format, and a spurious legacy fallback silently corrupting responses. Every one of those bugs would have appeared independently in any app that connected to Tastyworks directly. They appeared once, in SanthoshIAS, and every consumer inherited the fixed version automatically.
+
+**DuckDB analytical layer.** Resolved data is written to DuckDB for historical queries. Repeat requests for the same data — same options chain, same price series — are served from cache, not re-fetched from providers. Reduces API call volume, keeps data consistent across the stack, and means historical queries never touch external APIs at all.
+
+**MCP output interface.** SanthoshIAS exposes an MCP (Model Context Protocol) interface so AI assistants can query market data as a tool call. The design boundary was deliberate: MCP is right for tool-use output, wrong for high-throughput ingest where protocol overhead is unacceptable. The interface honours that boundary.
+
+## Sentinel — the admin and health dashboard
+
+As the number of services in the stack grew — SanthoshIAS, Moneta FastAPI, FlowDeck, APEX, the Rust gateway itself — managing them across restarts, debugging connection failures, and monitoring provider health became its own problem.
+
+Sentinel is the solution: a self-learning admin dashboard built specifically to monitor and manage the full personal stack.
+
+**What Sentinel does:**
+
+→ **Service health monitoring** — real-time status of every service in the stack. SanthoshIAS, FastAPI backends, provider connections, DuckDB — all visible in one view. Green, yellow, or red. No guessing which service is down when something breaks.
+
+→ **Provider status board** — live connection status for all six data providers. Which are connected, which are rate-limited, which are in fallback mode. When ThetaData goes down, Sentinel shows it before the first app error surfaces.
+
+→ **Start/stop lifecycle management** — controlled startup and shutdown for each service, from one interface. No SSH, no terminal juggling. Start the full stack in the right order; stop individual services for debugging without taking everything down.
+
+→ **Self-learning** — Sentinel observes patterns over time. Which providers fail most often and when. Which services take longest to start. Which error classes recur. Over time it builds a picture of the stack's behaviour that makes debugging faster — you arrive at the right hypothesis sooner because the history is visible.
+
+→ **Debug surface** — structured logging and connection traces per provider. When a request fails at SanthoshIAS, Sentinel shows which provider was tried, what it returned, and how long each step took. The debugging that used to require reading raw logs now has a UI.
 
 ## What it saves
 
-**Provider costs.** SanthoshIAS caches resolved data in DuckDB. Repeat queries for the same data — the same options chain, the same price series, the same position snapshot — are served from cache, not billed to provider APIs. The reduction in API call volume is significant for providers that charge per-call or have tight rate limits.
+**Development time — directly.** Every new app in the stack gets all six providers at the point of integration. No authentication code to write, no retry logic to implement, no session management to debug. Connect to port 7700, call the endpoint, get data.
 
-**Development time.** Every new consumer in the stack (a new Moneta module, a new APEX scanner, a new FlowDeck filter) gets all six providers for free at the point of integration. The DataResolver handles failover, authentication, rate limiting, and response normalisation. New consumers write to one clean interface and inherit the full provider network.
+**Debug time — significantly.** Before SanthoshIAS and Sentinel, debugging a data issue meant checking each app's logs, tracing each provider's responses, and reconstructing what happened from scattered output. Now it's one dashboard, one view, one trace per request. The time to root-cause a data issue dropped from an hour to minutes.
 
-**Reliability.** When ThetaData has an outage — which happens — QuantData picks up the load automatically. When QuantData's vol surface data lags, DXLink fills in. No manual intervention, no consumer-level fallback code, no incidents.
+**API costs — meaningfully.** The DuckDB cache layer means repeat queries for the same data don't hit provider APIs. For providers with per-call pricing or tight rate limits, the reduction is substantial.
 
-## The institutional parallel
+**Cognitive overhead — the hardest one to quantify but the most important.** Running multiple apps against multiple providers without a service layer means holding a lot of state in your head: which app is connected to which provider, which session is stale, which auth token needs refreshing. SanthoshIAS and Sentinel externalize that state into a system that can be observed and reasoned about. The cognitive load drops to near zero.
 
-The architecture of SanthoshIAS is structurally identical to the payment normalisation and routing layer in the wire automation platform at work — different domain, same pattern. One entry point, priority-chain resolution, provider-specific adapters behind a common interface, analytical layer for historical queries. Building SanthoshIAS at personal scale with real money on the line made the institutional pattern sharper. The debugging surface is smaller, the failure modes are more visible, and the accountability is direct.
+## The broader principle
 
-That's the point of running a personal stack at this level of sophistication.
+SanthoshIAS is a direct application of the same principle I use professionally: when you see the same problem appearing in multiple places, extract it. Don't solve it three times. Solve it once, correctly, and make the solution available as a service.
+
+At work, that looks like a wire automation platform that all middle-office teams share. At home, it looks like SanthoshIAS — a personal infrastructure layer that all my apps share. The abstraction level is different. The reasoning is identical.
