@@ -3,7 +3,7 @@ layout: case-study.njk
 tags: work
 title: "APEX / AlphaEdge — an options trading platform built like a production system"
 context: "Personal infrastructure · React 19 · FastAPI · Rust · DuckDB · v11 · 2023–present"
-order: 6
+order: 7
 description: "An options analytics and automated trading platform, now at v11. Bayesian expectancy, per-symbol state machines, market-character classification, and a five-layer safety architecture — engineered to production standards because the consequences are real."
 stats:
   - { n: "v11", label: "current version" }

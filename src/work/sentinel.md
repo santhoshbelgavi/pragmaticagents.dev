@@ -3,7 +3,7 @@ layout: case-study.njk
 tags: work
 title: "Sentinel — a self-learning admin dashboard for a personal service stack"
 context: "Personal infrastructure · Node · launchd · playbooks · Port 7799 · 2026–present"
-order: 7
+order: 6
 description: "Built when the stack got big enough that keeping it running became a job of its own. Sentinel supervises every service, restarts them intelligently when they fail, and turns each recurring failure into a playbook it runs automatically the next time."
 stats:
   - { n: "Port 7799", label: "one view of the whole stack" }
@@ -37,6 +37,12 @@ Sentinel is a single admin and health dashboard on port 7799. It runs as a launc
 **It fixes things.** When a known failure pattern shows up, Sentinel runs a playbook — a codified condition-to-action rule — instead of waiting for me to notice.
 
 ## How supervision actually works
+
+<div class="arch-diagram">
+<canvas id="sentinelCanvas" height="380"></canvas>
+<div class="arch-caption">Sentinel health-checks every service continuously. When one goes stale (red), a playbook fires and brings it back. Native services anchor to launchd; APEX runs under Sentinel's own supervisor. Hover any node for detail.</div>
+</div>
+<script src="/js/sentinel-animation.js"></script>
 
 The supervision model is deliberately boring, because boring is what survives a reboot at 3am.
 
