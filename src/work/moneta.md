@@ -7,14 +7,14 @@ order: 4
 description: "A self-hosted personal finance platform built because the alternatives either died, cost money while owning your data, or did the math wrong. 7,000+ transactions, 3 years of history, running on home infrastructure."
 stats:
   - { n: "7,000+", label: "transactions processed" }
-  - { n: "6", label: "brokerage accounts tracked" }
+  - { n: "6", label: "brokerage accounts" }
+  - { n: "25+", label: "bank / card / loan accounts" }
   - { n: "3 yrs", label: "of financial history" }
-  - { n: "100%", label: "local — zero cloud" }
 ---
 
 ## What is Moneta?
 
-Moneta is a self-hosted personal finance platform — a full replacement for Mint, Monarch, and Origin — that runs entirely on home infrastructure. It tracks spending, investments, and net worth across six brokerage accounts, applies institutional-grade performance mathematics, and projects long-term financial outcomes using Monte Carlo simulation. Every transaction, every holding, every calculation lives on a Terramaster NAS. No subscription. No third-party cloud. No data-sharing agreement buried in a terms-of-service page.
+Moneta is a self-hosted personal finance platform — a full replacement for Mint, Monarch, and Origin — that runs entirely on home infrastructure. It tracks spending, investments, and net worth across six brokerage accounts and over 25 bank, credit card, and loan accounts, applies institutional-grade performance mathematics, and projects long-term financial outcomes using Monte Carlo simulation. Every transaction, every holding, every calculation lives on a Terramaster NAS. No subscription. No third-party cloud. No data-sharing agreement buried in a terms-of-service page.
 
 It started as a simple question: why do personal finance tools either die (Mint), charge a monthly fee to store your most sensitive data in someone else's cloud (Monarch, Origin), or produce performance numbers that are subtly wrong? The answer is that building it correctly is hard, and most products take shortcuts. Moneta doesn't.
 
@@ -32,7 +32,13 @@ Three reasons, in order of weight.
 
 Moneta is built in three layers that each do one thing well.
 
-**Data layer — DuckDB.** Transaction history, holdings snapshots, price series, and computed metrics all live in DuckDB — an embedded analytical database that runs in-process, needs no server, and handles the columnar queries that performance attribution requires at native speed. Three years of transaction history and six brokerage accounts fit comfortably and query in milliseconds.
+<div class="arch-diagram">
+<canvas id="monetaCanvas" height="480"></canvas>
+<div class="arch-caption">Hover over any node to learn what it does. Data flows left to right — sources into the core, results into the dashboard.</div>
+</div>
+<script src="/js/moneta-animation.js"></script>
+
+**Data layer — DuckDB.** Transaction history, holdings snapshots, price series, and computed metrics all live in DuckDB — an embedded analytical database that runs in-process, needs no server, and handles the columnar queries that performance attribution requires at native speed. Three years of transaction history, six brokerage accounts, and 25+ bank and credit card accounts fit comfortably and query in milliseconds.
 
 **API layer — FastAPI + Rust gateway.** A FastAPI backend handles business logic, performance calculations, and projection runs. The SanthoshIAS Rust gateway sits in front of market data — routing requests across multiple providers (Alpaca, yfinance, FRED) with priority-chain failover. The same DataResolver pattern used in the gateway is the same integration architecture used in institutional systems; Moneta is where it gets pressure-tested at personal scale.
 
