@@ -626,6 +626,7 @@ document.addEventListener('DOMContentLoaded', function () {
   if(bAddFund) bAddFund.addEventListener('click',  addFund);
   if(bAddTeam) bAddTeam.addEventListener('click',  addTeam);
   if(bReset)   bReset.addEventListener('click',    resetConfig);
+  var bm = {btnApi:'api', btnFile:'file', btnZday:'zday'};
   Object.keys(bm).forEach(function(id){var el=document.getElementById(id);if(el)el.addEventListener('click',function(){fireSource(bm[id]);});});
   var bAll=document.getElementById('btnAll'),bAuto=document.getElementById('autoBtn');
   if(bAll)bAll.addEventListener('click',fireAll);
