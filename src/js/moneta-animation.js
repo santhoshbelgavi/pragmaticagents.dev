@@ -49,19 +49,19 @@ document.addEventListener('DOMContentLoaded', function () {
     // ── Data sources (left) — 6 items
     var sw=W*0.13, sh=(availH-gap*5)/6;
     SOURCES=[
-      {id:'simplfin', label:'SimpleFIN',    sub:'bank/card/loan',  x:c1,y:padT,             w:sw,h:sh,col:P.green, bg:P.greenBg, ring:P.greenRing, pc:P.pGreen,  _hl:0,_pulse:0},
-      {id:'alpaca',   label:'Alpaca',       sub:'market data',     x:c1,y:padT+sh+gap,      w:sw,h:sh,col:P.blue,  bg:P.blueBg,  ring:P.blueRing,  pc:P.pBlue,   _hl:0,_pulse:0},
-      {id:'yfinance', label:'yfinance',     sub:'prices/history',  x:c1,y:padT+sh*2+gap*2,  w:sw,h:sh,col:P.blue,  bg:P.blueBg,  ring:P.blueRing,  pc:P.pBlue,   _hl:0,_pulse:0},
-      {id:'fred',     label:'FRED',         sub:'macro/rates',     x:c1,y:padT+sh*3+gap*3,  w:sw,h:sh,col:P.slate, bg:P.slateBg, ring:P.slateRing, pc:P.pIndigo, _hl:0,_pulse:0},
-      {id:'edgar',    label:'SEC EDGAR',    sub:'N-PORT holdings', x:c1,y:padT+sh*4+gap*4,  w:sw,h:sh,col:P.slate, bg:P.slateBg, ring:P.slateRing, pc:P.pIndigo, _hl:0,_pulse:0},
-      {id:'ias',      label:'SanthoshIAS',  sub:'Rust gateway',    x:c1,y:padT+sh*5+gap*5,  w:sw,h:sh,col:P.rust,  bg:P.rustBg,  ring:P.rustRing,  pc:P.pAmber,  _hl:0,_pulse:0},
+      {id:'simplfin', label:'SimpleFIN',   sub:'bank/card/loan',   x:c1,y:padT,             w:sw,h:sh,col:P.green, bg:P.greenBg, ring:P.greenRing, pc:P.pGreen,  _hl:0,_pulse:0},
+      {id:'plaid',    label:'Plaid',       sub:'more institutions', x:c1,y:padT+sh+gap,      w:sw,h:sh,col:P.green, bg:P.greenBg, ring:P.greenRing, pc:P.pGreen,  _hl:0,_pulse:0},
+      {id:'ibkr',     label:'IBKR Flex',   sub:'positions XML',     x:c1,y:padT+sh*2+gap*2,  w:sw,h:sh,col:P.blue,  bg:P.blueBg,  ring:P.blueRing,  pc:P.pBlue,   _hl:0,_pulse:0},
+      {id:'tasty',    label:'Tastytrade',  sub:'options accounts',  x:c1,y:padT+sh*3+gap*3,  w:sw,h:sh,col:P.blue,  bg:P.blueBg,  ring:P.blueRing,  pc:P.pBlue,   _hl:0,_pulse:0},
+      {id:'csv',      label:'CSV inbox',   sub:'manual imports',    x:c1,y:padT+sh*4+gap*4,  w:sw,h:sh,col:P.slate, bg:P.slateBg, ring:P.slateRing, pc:P.pIndigo, _hl:0,_pulse:0},
+      {id:'ias',      label:'SanthoshIAS', sub:'live quotes',       x:c1,y:padT+sh*5+gap*5,  w:sw,h:sh,col:P.rust,  bg:P.rustBg,  ring:P.rustRing,  pc:P.pAmber,  _hl:0,_pulse:0},
     ];
 
     // ── Core engine (centre) — 3 stacked modules
     var mw=W*0.22, mh=(availH-gap*2)/3;
     CORE=[
-      {id:'duckdb',  label:'DuckDB',      sub:'transactions · holdings · prices', x:c2,y:padT,           w:mw,h:mh,col:P.amber, bg:P.amberBg, ring:P.amberRing, _hl:0,_pulse:0},
-      {id:'fastapi', label:'FastAPI',      sub:'performance · projections · AI',   x:c2,y:padT+mh+gap,    w:mw,h:mh,col:P.indigo,bg:P.indigoBg,ring:P.indigoRing,_hl:0,_pulse:0},
+      {id:'sqlite',  label:'SQLite',      sub:'better-sqlite3 · Drizzle · WAL',   x:c2,y:padT,           w:mw,h:mh,col:P.amber, bg:P.amberBg, ring:P.amberRing, _hl:0,_pulse:0},
+      {id:'hono',    label:'Hono API',    sub:'performance · categorization · cache',x:c2,y:padT+mh+gap,  w:mw,h:mh,col:P.indigo,bg:P.indigoBg,ring:P.indigoRing,_hl:0,_pulse:0},
       {id:'horizon', label:'Moneta Horizon',sub:'Monte Carlo · tax engine · optimizer',x:c2,y:padT+mh*2+gap*2,w:mw,h:mh,col:P.rose,  bg:P.roseBg,  ring:P.roseRing,  _hl:0,_pulse:0},
     ];
 
@@ -90,7 +90,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function buildPaths(){
-    // Source → DuckDB (primary store)
+    // Source → SQLite (primary store)
     SOURCES.forEach(function(s, i){
       PATHS['src_'+s.id] = {
         sx:br(s), sy:bcy(s),
@@ -99,21 +99,21 @@ document.addEventListener('DOMContentLoaded', function () {
         tx:bl(CORE[0]), ty:bcy(CORE[0])
       };
     });
-    // DuckDB → FastAPI
+    // SQLite → Hono
     PATHS.db_api = {
       sx:CORE[0].x, sy:bb(CORE[0]),
       cx1:CORE[0].x, cy1:bb(CORE[0])+H*0.03,
       cx2:CORE[1].x, cy2:bt(CORE[1])-H*0.03,
       tx:CORE[1].x, ty:bt(CORE[1])
     };
-    // FastAPI → Horizon
+    // Hono → Horizon
     PATHS.api_horizon = {
       sx:CORE[1].x, sy:bb(CORE[1]),
       cx1:CORE[1].x, cy1:bb(CORE[1])+H*0.03,
       cx2:CORE[2].x, cy2:bt(CORE[2])-H*0.03,
       tx:CORE[2].x, ty:bt(CORE[2])
     };
-    // FastAPI/Horizon → Dashboard modules
+    // Hono/Horizon → Dashboard modules
     DASH.slice(0,5).forEach(function(d, i){
       var src = (i >= 3) ? CORE[2] : CORE[1]; // projections from Horizon
       PATHS['core_'+d.id] = {
@@ -218,7 +218,7 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function drawConnectors(){
-    // Source → DuckDB
+    // Source → SQLite
     SOURCES.forEach(function(s){
       var p=PATHS['src_'+s.id];
       ctx.beginPath(); ctx.moveTo(p.sx,p.sy);
@@ -226,7 +226,7 @@ document.addEventListener('DOMContentLoaded', function () {
       ctx.strokeStyle=rgba(s.col,0.18); ctx.lineWidth=dpr*0.8;
       ctx.setLineDash([4*dpr,4*dpr]); ctx.stroke(); ctx.setLineDash([]);
     });
-    // DuckDB → FastAPI → Horizon
+    // SQLite → Hono → Horizon
     [PATHS.db_api, PATHS.api_horizon].forEach(function(p){
       ctx.beginPath(); ctx.moveTo(p.sx,p.sy); ctx.lineTo(p.tx,p.ty);
       ctx.strokeStyle=rgba(P.muted,0.20); ctx.lineWidth=dpr*0.8;
@@ -250,16 +250,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // ── TOOLTIPS ─────────────────────────────────────────────
   var TIPS = {
-    simplfin: 'SimpleFIN Bridge connects directly to bank and credit union APIs — 25+ accounts across checking, savings, cards, and loans. No screen-scraping.',
-    alpaca:   'Alpaca provides real-time and historical market data for equities and ETFs held across brokerage accounts.',
-    yfinance: 'yfinance supplements price history and dividend data, especially for funds and older time series.',
-    fred:     'FRED (Federal Reserve Economic Data) provides macro series — interest rates, inflation, yield curves — used in projection modelling.',
-    edgar:    'SEC EDGAR N-PORT filings are parsed to extract institutional fund holdings — what mutual funds actually own, updated quarterly.',
-    ias:      'SanthoshIAS is a Rust-built gateway with priority-chain DataResolver routing across all market data providers. If Alpaca is down, it falls through to the next provider automatically.',
-    duckdb:   '7,000+ transactions and 3 years of holdings snapshots live in DuckDB — an embedded columnar database that runs in-process with no server and queries in milliseconds.',
-    fastapi:  'FastAPI handles performance calculations (TWR, MWR, Sharpe, maxDD), the AI fund alternatives engine, and serves the React frontend. Also exposes an MCP interface for AI assistant integration.',
+    simplfin: 'SimpleFIN Bridge connects directly to bank and credit-union APIs — the primary feed for 25+ checking, savings, card, and loan accounts. No screen-scraping.',
+    plaid:    'Plaid was added recently to reach institutions SimpleFIN does not cover — same direct-API model, no screen-scraping.',
+    ibkr:     'Interactive Brokers Flex Queries — scheduled XML exports of positions, trades, and cash activity for the IBKR investment accounts.',
+    tasty:    'The Tastytrade API feeds the options and futures accounts — positions, fills, and running P&L.',
+    csv:      'A CSV inbox catches anything the connectors cannot reach — drop a file in, it is parsed and reconciled against existing transactions.',
+    ias:      'Live market quotes for held positions route through SanthoshIAS, a small provider-routing layer shared across the stack, with priority-chain failover and an in-process quote cache.',
+    sqlite:   'Every transaction, holding snapshot, and computed metric lives in one SQLite file — better-sqlite3, WAL mode, 64MB page cache. Three years of data, queried in milliseconds. Two tables (networth_cache, cashflow_monthly_cache) are materialised views recomputed on write.',
+    hono:     'A Hono API (TypeScript, in the Express/Fastify family) handles performance math — TWR, MWR, Sharpe, maxDD — projection runs, and the rules-then-MiniLM-then-Gemma categorization cascade. An in-process TTL cache with write-through invalidation sits in front of the heaviest endpoints; Server-Sent Events push sync progress to the browser.',
     horizon:  'Moneta Horizon runs Monte Carlo projection scenarios (GBM, block bootstrap, regime-switching), a full 2026 federal/Pennsylvania tax engine, a Roth conversion optimizer, and an asset location linear program.',
-    cashflow: 'Sankey diagram rendered server-side in FastAPI and painted in the browser — income flowing into spending categories, investments, and savings. Drill down to any category.',
+    cashflow: 'The month as a Sankey diagram — income flowing into spending categories, investments, and savings. Aggregates come from a materialised monthly-cashflow table, so it loads in milliseconds regardless of history depth.',
     invest:   'Investment dashboard across 6 brokerage accounts. Time-Weighted Return separates your performance from your contribution timing. Money-Weighted Return shows your actual dollar outcome. Sharpe and maxDD complete the picture.',
     ai:       'Given a current holding, the AI engine scores potential swap candidates across expense ratio, tracking error, tax efficiency, and factor exposure — producing a ranked shortlist with composite scores.',
     proj:     'Projection fan chart showing the distribution of retirement outcomes across 10,000 Monte Carlo simulations. Not a line — a probability distribution. Includes Roth conversion ladder optimisation and asset location recommendations.',
@@ -319,24 +319,24 @@ document.addEventListener('DOMContentLoaded', function () {
     this.tx=0; this.ty=0;
     this.history=[];
     this.pathKey=null;
-    // After hitting DuckDB, spawn result particles to dashboard
+    // After hitting SQLite, spawn result particles to dashboard
     this.spawnedResult=false;
     this.setTarget();
   }
 
   Particle.prototype.setTarget=function(){
     if(this.phase===0){
-      // src → DuckDB
+      // src → SQLite
       var p=PATHS['src_'+this.srcId];
       this.tx=p.tx; this.ty=p.ty; this.pathKey='src_'+this.srcId;
     } else if(this.phase===1){
-      // DuckDB centre
+      // SQLite centre
       this.tx=CORE[0].x; this.ty=bcy(CORE[0]); this.pathKey=null;
     } else if(this.phase===2){
-      // DuckDB → FastAPI
+      // SQLite → Hono
       this.tx=CORE[1].x; this.ty=bcy(CORE[1]); this.pathKey='db_api';
     } else if(this.phase===3){
-      // FastAPI → random dashboard output
+      // Hono → random dashboard output
       var dashIdx=Math.floor(Math.random()*5);
       var d=DASH[dashIdx];
       this.destDash=dashIdx;
