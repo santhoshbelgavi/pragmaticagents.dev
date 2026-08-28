@@ -10,7 +10,7 @@ stats:
   - { n: "7,000+", label: "transactions processed" }
   - { n: "6", label: "brokerage accounts" }
   - { n: "25+", label: "bank / card / loan accounts" }
-  - { n: "3 yrs", label: "of financial history" }
+  - { n: "7s → 15ms", label: "data load, after the perf overhaul" }
 ---
 
 ## What is Moneta?
@@ -46,6 +46,36 @@ Moneta is built in three layers that each do one thing well.
 **Frontend — React 19 + d3-sankey.** The dashboard is a composable widget system built in React 19 with dnd-kit for drag-and-drop layout. The cashflow visualisation uses d3-sankey to render Sankey diagrams — income flowing into spending categories, investments, and savings — server-rendered in FastAPI and painted in the browser. Widget registry entries map to small, medium, and large layout variants, designed to match WidgetKit systemSmall/Medium/Large for a planned native iOS/iPadOS/macOS companion app.
 
 **Data sources — SimpleFIN Bridge + SEC EDGAR.** Bank and brokerage transaction data arrives via SimpleFIN Bridge, which avoids screen-scraping by connecting directly to financial institution APIs. Holdings data includes an SEC EDGAR N-PORT parser that pulls institutional fund holdings directly from regulatory filings — the same data mutual fund managers are required to disclose quarterly.
+
+## Performance — a seven-second load, traced to first principles
+
+Every page took roughly seven seconds on a hard refresh before the data appeared. The database wasn't the problem — a direct query answered in eight milliseconds. The API wasn't the problem — through the local proxy it was still seventeen. But the browser, requesting the same endpoint with the same data on a hard refresh, waited **7,600 milliseconds**.
+
+I found it by measuring the same request at three points in the stack rather than guessing:
+
+| Path | Cold | Warm |
+|---|---|---|
+| Direct to the API | 8&nbsp;ms | &lt;2&nbsp;ms |
+| Through the dev proxy | 17&nbsp;ms | &lt;2&nbsp;ms |
+| Browser, hard refresh | **7,600&nbsp;ms** | &lt;2&nbsp;ms |
+
+The 450× gap between the proxy and the browser pointed at one mechanism: **HTTP/1.1 connection saturation.** A browser opens at most six connections per origin. On a hard refresh one was held permanently by the live-updates stream (Server-Sent Events), and the other five were consumed downloading 200-plus JavaScript chunks. The API calls the frontend needed on mount had no slot — they queued behind the chunk downloads in the dev server's single event loop, even though the API was answering in milliseconds the whole time.
+
+Local development hides this. In production, static files come from a CDN and the API sits on its own domain; they never compete for the same connection pool. Running the whole stack in one process on one machine collapses that separation, and the contention only shows up under the load of a cold start.
+
+**Five fixes, across four layers:**
+
+**Connection lifecycle.** The live-updates stream now opens on `window.load`, after the critical resources are down — freeing all six connection slots during the render path. Time to a usable DOM dropped from 37 seconds to 0.6.
+
+**Render lifecycle.** The server-rendered default didn't match the interface every user actually sees after the page hydrates, so each load mounted one dashboard, switched, and re-mounted another — firing 22 API calls instead of 10. Aligning the server default with the post-hydration state halved that.
+
+**Transport.** API calls now go straight to the backend instead of through the frontend's rewrite proxy, so they no longer queue behind static-file serving in the same event loop. Browser response times: 7,600 ms → 4–22 ms.
+
+**Caching.** A small in-process cache in front of the eight heaviest endpoints, with **write-through invalidation** — any mutation that changes the data clears the cache covering it, so recategorising a transaction shows the corrected number immediately, not whenever a timer lapses. Warm responses: 100–500 ms → under 2 ms.
+
+**Storage.** The monthly cashflow aggregates — income, expenses, per-category breakdown — moved from read-time computation to a materialised table recomputed on write. A twelve-month summary that used to scan the full transaction table (27 ms, and growing linearly with every year of history) is now a handful of primary-key lookups (1.9 ms, flat regardless of data volume).
+
+The thread through all five: **work that happens on every read should be paid once, on write.** Reads are constant — every page load, every widget. Writes are rare — one sync a day, the occasional manual edit. Anything you can shift from the first to the second is close to free.
 
 ## Unique features
 
