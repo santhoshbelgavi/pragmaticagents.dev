@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
   function inside(b,mx,my){return mx>=bl(b)&&mx<=br(b)&&my>=bt(b)&&my<=bb(b);}
   function fs(base){return Math.max(base*dpr*0.62,base*0.9);}
 
-  var W,H,CONSUMERS=[],RESOLVER,PROVIDERS=[],DUCKDB,MCP,PATHS={};
+  var W,H,CONSUMERS=[],RESOLVER,PROVIDERS=[],DUCKDB,REDIS,PATHS={};
 
   function layout(){
     var cw=canvas.parentElement.clientWidth-8,ch=380;
@@ -59,8 +59,8 @@ document.addEventListener('DOMContentLoaded', function () {
     // DuckDB analytical store
     DUCKDB={id:'duckdb',label:'DuckDB',sub:'analytical cache',x:c4,y:padT+availH*0.1,w:W*0.11,h:availH*0.4,col:P.amber,bg:P.amberBg,ring:P.amberRing,_hl:0,_pulse:0};
 
-    // MCP output
-    MCP={id:'mcp',label:'MCP',sub:'AI tool interface',x:c5,y:padT+availH*0.55,w:W*0.09,h:availH*0.3,col:P.teal,bg:P.tealBg,ring:P.tealRing,_hl:0,_pulse:0};
+    // Redis event bus
+    REDIS={id:'redis',label:'Redis',sub:'event bus / streams',x:c4,y:padT+availH*0.58,w:W*0.11,h:availH*0.32,col:P.teal,bg:P.tealBg,ring:P.tealRing,_hl:0,_pulse:0};
 
     buildPaths();
   }
@@ -72,8 +72,8 @@ document.addEventListener('DOMContentLoaded', function () {
     PROVIDERS.forEach(function(p){PATHS['r_'+p.id]={sx:br(RESOLVER),sy:bcy(RESOLVER),cx1:br(RESOLVER)+W*0.03,cy1:bcy(RESOLVER),cx2:bl(p)-W*0.02,cy2:bcy(p),tx:bl(p),ty:bcy(p)};});
     // Resolver → DuckDB
     PATHS.r_db={sx:br(RESOLVER),sy:bcy(RESOLVER)+H*0.04,cx1:br(RESOLVER)+W*0.04,cy1:bcy(RESOLVER)+H*0.04,cx2:bl(DUCKDB)-W*0.02,cy2:bcy(DUCKDB),tx:bl(DUCKDB),ty:bcy(DUCKDB)};
-    // DuckDB → MCP
-    PATHS.db_mcp={sx:br(DUCKDB),sy:bcy(DUCKDB),cx1:br(DUCKDB)+W*0.02,cy1:bcy(DUCKDB),cx2:bl(MCP)-W*0.01,cy2:bcy(MCP),tx:bl(MCP),ty:bcy(MCP)};
+    // Resolver → Redis (live streams fan out over the event bus)
+    PATHS.r_redis={sx:br(RESOLVER),sy:bcy(RESOLVER)+H*0.08,cx1:br(RESOLVER)+W*0.06,cy1:bb(REDIS),cx2:bl(REDIS)-W*0.02,cy2:bcy(REDIS),tx:bl(REDIS),ty:bcy(REDIS)};
   }
 
   function pathPoint(p,t){var e=t<0.5?2*t*t:-1+(4-2*t)*t;return{x:(1-e)*(1-e)*(1-e)*p.sx+3*(1-e)*(1-e)*e*p.cx1+3*(1-e)*e*e*p.cx2+e*e*e*p.tx,y:(1-e)*(1-e)*(1-e)*p.sy+3*(1-e)*(1-e)*e*p.cy1+3*(1-e)*e*e*p.cy2+e*e*e*p.ty};}
@@ -98,7 +98,8 @@ document.addEventListener('DOMContentLoaded', function () {
       var p=PATHS['r_'+pv.id];ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.bezierCurveTo(p.cx1,p.cy1,p.cx2,p.cy2,p.tx,p.ty);
       ctx.strokeStyle=i<2?rgba(P.blue,0.25):rgba(P.slate,0.15);ctx.stroke();
     });
-    [PATHS.r_db,PATHS.db_mcp].forEach(function(p){ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.bezierCurveTo(p.cx1,p.cy1,p.cx2,p.cy2,p.tx,p.ty);ctx.strokeStyle=rgba(P.amber,0.20);ctx.stroke();});
+    [PATHS.r_db].forEach(function(p){ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.bezierCurveTo(p.cx1,p.cy1,p.cx2,p.cy2,p.tx,p.ty);ctx.strokeStyle=rgba(P.amber,0.20);ctx.stroke();});
+    [PATHS.r_redis].forEach(function(p){ctx.beginPath();ctx.moveTo(p.sx,p.sy);ctx.bezierCurveTo(p.cx1,p.cy1,p.cx2,p.cy2,p.tx,p.ty);ctx.strokeStyle=rgba(P.teal,0.20);ctx.stroke();});
     ctx.setLineDash([]);
 
     // Priority labels
@@ -118,7 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ibkr:'Priority 5. IBKR — live broker data and order routing for managed accounts.',
     tasty:'Priority 6. Tastyworks — broker data and options order routing. Six bugs fixed in the connector before it worked correctly.',
     duckdb:'Resolved data is written to DuckDB. Repeat queries for the same data are served from cache — reducing API call volume and keeping data consistent across Moneta, FlowDeck, and APEX.',
-    mcp:'MCP (Model Context Protocol) interface — exposes SanthoshIAS data to AI assistants. Correct for tool-use output; not used for high-throughput ingest where protocol overhead is unacceptable.',
+    redis:'Redis streams carry the live push side — DXLink quotes and flow updates fan out over the event bus, so each consumer subscribes once and SanthoshIAS handles reconnect, backfill, and de-duplication behind it.',
   };
 
   function drawTooltip(b){
@@ -177,7 +178,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   function tick(){
     ctx.clearRect(0,0,W,H);
-    var all=CONSUMERS.concat([RESOLVER]).concat(PROVIDERS).concat([DUCKDB,MCP]);
+    var all=CONSUMERS.concat([RESOLVER]).concat(PROVIDERS).concat([DUCKDB,REDIS]);
     all.forEach(function(b){if(b._hl)b._hl=Math.max(0,b._hl-0.025);if(b._pulse)b._pulse=Math.max(0,b._pulse-0.035);});
     drawConnectors();
     all.forEach(drawNode);
@@ -187,7 +188,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   canvas.addEventListener('mousemove',function(e){
     var rect=canvas.getBoundingClientRect(),mx=(e.clientX-rect.left)*dpr,my=(e.clientY-rect.top)*dpr;
-    var all=CONSUMERS.concat([RESOLVER]).concat(PROVIDERS).concat([DUCKDB,MCP]);hoveredNode=null;
+    var all=CONSUMERS.concat([RESOLVER]).concat(PROVIDERS).concat([DUCKDB,REDIS]);hoveredNode=null;
     for(var i=0;i<all.length;i++){if(inside(all[i],mx,my)){hoveredNode=all[i];break;}}canvas.style.cursor=hoveredNode?'help':'default';
   });
   canvas.addEventListener('mouseleave',function(){hoveredNode=null;canvas.style.cursor='default';});

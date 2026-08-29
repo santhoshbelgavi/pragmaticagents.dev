@@ -2,7 +2,7 @@
 layout: case-study.njk
 tags: work
 title: "SanthoshIAS — personal **Infrastructure-as-a-Service** for a multi-app development environment"
-context: "Personal infrastructure · Rust · DataResolver · DuckDB · MCP · 2024–present"
+context: "Personal infrastructure · Rust · Axum · DuckDB · Redis · 2024–present"
 order: 5
 description: "Built from a simple observation: every app I developed needed the same data providers, and each one was reimplementing the same start/stop, auth, and failover logic independently. SanthoshIAS is the service layer I extracted — one provider, one contract, all apps."
 tldr: "Every app I built needed the same data providers, and each one re-implemented its own auth, failover, and start/stop logic. SanthoshIAS is the service layer I extracted — one contract, six providers, all apps. New apps get every provider for free; provider bugs get fixed once, not once per app."
@@ -49,7 +49,7 @@ SanthoshIAS presents a single clean API to every consumer in the stack. Every ap
 
 **DuckDB analytical layer.** Resolved data is written to DuckDB for historical queries. Repeat requests for the same data — same options chain, same price series — are served from cache, not re-fetched from providers. Reduces API call volume, keeps data consistent across the stack, and means historical queries never touch external APIs at all.
 
-**MCP output interface.** SanthoshIAS exposes an MCP (Model Context Protocol) interface so AI assistants can query market data as a tool call. The design boundary was deliberate: MCP is right for tool-use output, wrong for high-throughput ingest where protocol overhead is unacceptable. The interface honours that boundary.
+**Redis event bus.** Live provider streams (DXLink quotes, flow updates) fan out over Redis streams, so a consumer subscribes once and SanthoshIAS handles the reconnect, backfill, and de-duplication behind it. The `axum` HTTP layer serves request/response; Redis carries the push side.
 
 ## Sentinel — the dashboard that keeps the stack alive
 

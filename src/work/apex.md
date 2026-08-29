@@ -2,7 +2,7 @@
 layout: case-study.njk
 tags: work
 title: "APEX / AlphaEdge — an options trading platform **built like a production system**"
-context: "Personal infrastructure · React 19 · FastAPI · Rust · DuckDB · v11 · 2023–present"
+context: "Personal infrastructure · Python · FastAPI · Redis · DuckDB · React 18 · v11 · 2023–present"
 order: 7
 description: "An options analytics and automated trading platform, now at v11. Bayesian expectancy, per-symbol state machines, market-character classification, and a five-layer safety architecture — engineered to production standards because the consequences are real."
 tldr: "A self-built options analytics and semi-automated trading platform, now at v11. Every version is a fix for something that went wrong — $86K+ in paper losses diagnosed and engineered out with a five-layer safety architecture, per-symbol state machines, and a Bayesian expectancy engine. It runs in paper mode; the production-grade discipline is the point."
@@ -15,7 +15,7 @@ stats:
 
 ## What is APEX?
 
-APEX (AlphaEdge) is a self-built options analytics and semi-automated trading platform. It ingests real-time market data, classifies market conditions, selects strikes using an Expected Move framework, scores signals through a Bayesian expectancy engine, and manages positions via per-symbol state machines with a five-layer safety architecture. The frontend is a React 19/TypeScript/Vite SPA. FastAPI handles the backend, SanthoshIAS routes market data, and DuckDB stores everything.
+APEX (AlphaEdge) is a self-built options analytics and semi-automated trading platform. It ingests real-time market data, classifies market conditions, selects strikes using an Expected Move framework, scores signals through a Bayesian expectancy engine, and manages positions via per-symbol state machines with a five-layer safety architecture. The frontend is a React 18/TypeScript/Vite SPA. A FastAPI (Python) backend handles the API and a Redis pub/sub bus relays live updates to the UI over SSE; SanthoshIAS routes market data, a DuckDB cache holds the historical market data, and SQLite persists the trade log.
 
 It is v11. Each version is a response to something that went wrong — systematically diagnosed, root-caused, and fixed.
 
