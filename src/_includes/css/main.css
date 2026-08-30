@@ -499,6 +499,25 @@ h1 {
 .case-cta a { color: var(--accent); text-decoration: underline; text-decoration-color: rgba(168,118,59,.4); text-underline-offset: 3px; }
 
 /* about / list pages */
+.about-layout {
+  display: flex;
+  gap: 32px;
+  align-items: flex-start;
+  margin-top: 8px;
+}
+.about-photo {
+  flex: 0 0 176px;
+  display: block;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 1px solid var(--hairline);
+  background: var(--card);
+}
+.about-photo img { width: 100%; height: auto; display: block; }
+@media (max-width: 560px) {
+  .about-layout { flex-direction: column; gap: 22px; }
+  .about-photo { flex-basis: auto; width: 150px; }
+}
 .body-text {
   color: var(--secondary);
   font-size: 16px;
