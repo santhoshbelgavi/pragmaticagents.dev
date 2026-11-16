@@ -16,9 +16,9 @@ import { DISTRICTS } from "/js/lab/capability-city-data.js";
 // `body` tints the building, `light` is the roof and floor strips. Brighter light = more glow,
 // so manual buildings look unlit next to automated and agent-ready ones.
 const LEVELS = {
-  manual:    { label: "Manual",      hex: LOOK.steel, lightK: 1.0 },
-  automated: { label: "Automated",   hex: LOOK.gold,  lightK: 1.7 },
-  agent:     { label: "Agent-ready", hex: LOOK.teal,  lightK: 2.0 },
+  manual:    { label: "Manual",      hex: LOOK.steel, lightK: 0.8 },
+  automated: { label: "Automated",   hex: LOOK.gold,  lightK: 1.45 },
+  agent:     { label: "Agent-ready", hex: LOOK.teal,  lightK: 1.7 },
 };
 
 const CITY = {
@@ -41,7 +41,7 @@ const VIEWS = ["treasury", "settlement", "accounting"];
 const $ = (id) => document.getElementById(id);
 const st = createStage({
   stageEl: $("cc-stage"), canvas: $("cc-canvas"), labelEl: $("cc-labels"),
-  target: [0, 2.2, 0], halfWidth: 17, halfHeight: 9.5, elevation: 30, azimuth: -28,
+  target: [0, 2.2, 0], halfWidth: 17, halfHeight: 13, elevation: 30, azimuth: -28,
 });
 
 for (const level of Object.values(LEVELS)) {
@@ -56,6 +56,7 @@ const ring = DISTRICTS.filter((d) => !d.hub);
 const plotTop = CITY.plotHeight;
 const buildings = [];
 const districtCentre = {};
+const districtLabels = [];
 
 for (const d of DISTRICTS) {
   const i = ring.indexOf(d);
@@ -88,7 +89,7 @@ for (const d of DISTRICTS) {
       body: DIMMED.body.clone(), light: DIMMED.light.clone(),
     });
   });
-  st.addLabel(d.name, "", new THREE.Vector3(cx, plotTop + tallest + 1.5, cz), "wf-label-title");
+  districtLabels.push(st.addLabel(d.name, "", new THREE.Vector3(cx, plotTop + tallest + 1.1, cz), "wf-label-title cc-label-district"));
 }
 
 // Three instanced meshes draw the whole city: bodies (lit), light strips and roofs (glowing).
@@ -147,12 +148,14 @@ function update(dt) {
       strips.setColorAt(s, tmpColor);
     }
     box(strips, s, b.x, plotTop + h, b.z, b.w * 0.72, 0.1, b.d * 0.72); // roof light
-    strips.setColorAt(s++, tmpColor);
+    strips.setColorAt(s++, tmpColor.multiplyScalar(0.62)); // a roof is a large area, so it needs less brightness than a strip
   });
   for (const mesh of [bodies, strips]) {
     mesh.instanceMatrix.needsUpdate = true;
     mesh.instanceColor.needsUpdate = true;
   }
+
+  declutterLabels();
 
   const sel = state.selected;
   if (sel) {
@@ -166,7 +169,33 @@ function update(dt) {
   if (state.hovered) hoverPos.set(state.hovered.x, plotTop + heightNow(state.hovered) + 0.5, state.hovered.z);
 }
 
+// As the camera orbits, district labels pass in front of each other. Nearest label wins;
+// a label that would overlap one already shown fades out (the fade is a CSS transition).
+const projected = new THREE.Vector3();
+function declutterLabels() {
+  const stage = $("cc-stage"), w = stage.clientWidth, h = stage.clientHeight;
+  const shown = [];
+  // the selected building's label always shows, so it goes first
+  (state.selected ? [pinLabel, ...districtLabels] : districtLabels)
+    .map((label) => {
+      projected.copy(label.pos).project(st.camera);
+      const depth = label === pinLabel ? -Infinity : projected.z;
+      return { label, x: (projected.x + 1) / 2 * w, y: (1 - projected.y) / 2 * h, depth, half: label.el.offsetWidth / 2, tall: label.el.offsetHeight };
+    })
+    .sort((a, b) => a.depth - b.depth)
+    .forEach((p) => {
+      const clash = shown.some((q) => Math.abs(p.x - q.x) < p.half + q.half + 6 && p.y - p.tall < q.y + 4 && q.y - q.tall < p.y + 4); // y is the label's bottom edge
+      p.label.el.style.opacity = clash ? 0 : 1;
+      if (!clash) shown.push(p);
+    });
+}
+
 // ---------- panel, counters, controls ----------
+function text(str) {
+  const el = document.createElement("span");
+  el.textContent = str;
+  return el;
+}
 function chip(level) {
   const el = document.createElement("span"), sw = document.createElement("i");
   el.className = "cc-chip";
@@ -184,9 +213,9 @@ function showDetail() {
   pinLabel.set(cap.name, b.district.name);
   $("cc-d-name").textContent = cap.name;
   const meta = $("cc-d-meta");
-  meta.replaceChildren(b.district.name, chip(cap.today));
-  if (changes) meta.append("to", chip(cap.target), "in the target state");
-  meta.append(`Relative volume ${cap.volume} of 10`);
+  meta.replaceChildren(text(b.district.name), chip(cap.today));
+  if (changes) meta.append(text("to"), chip(cap.target), text("in the target state"));
+  meta.append(text(`Relative volume ${cap.volume} of 10`));
   $("cc-d-what").textContent = cap.what;
   // In the target state, lead with what changes; today, with why it is where it is.
   const today = "Today: " + cap.why;
@@ -195,6 +224,8 @@ function showDetail() {
 }
 function select(b) {
   state.selected = b;
+  state.hovered = null;
+  hoverLabel.el.hidden = true;
   showDetail();
 }
 
@@ -270,10 +301,10 @@ canvas.addEventListener("pointerleave", () => { state.hovered = null; hoverLabel
 function districtView(id) {
   const c = districtCentre[id];
   const out = c.clone().setY(0).normalize();
-  const dist = st.camera.aspect < 1 ? 19 : 13.5; // stand further back on a tall, narrow stage
+  const dist = st.camera.aspect < 1 ? 25 : 18; // stand further back on a tall, narrow stage
   return {
-    pos: c.clone().addScaledVector(out, dist).add(new THREE.Vector3(-out.z * 5, dist * 0.62, out.x * 5)),
-    target: c.clone().setY(2.4),
+    pos: c.clone().addScaledVector(out, dist).add(new THREE.Vector3(-out.z * 6, dist * 0.6, out.x * 6)),
+    target: c.clone().setY(3),
   };
 }
 document.querySelectorAll("[data-cc-view]").forEach((btn) => {

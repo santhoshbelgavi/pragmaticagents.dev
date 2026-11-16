@@ -14,6 +14,7 @@ permalink: /lab/pipeline-race/
 .pr-table th { font-weight: 600; color: var(--secondary); border-top: 0; }
 .pr-table td + td, .pr-table th + th { text-align: right; padding-right: 0; padding-left: 10px; white-space: nowrap; }
 .wf-stat b { font-size: 21px; }
+.pr-clock { position: absolute; left: 12px; bottom: 32px; font: 600 13px var(--sans); color: #F3EBDD; font-variant-numeric: tabular-nums; text-shadow: 0 1px 6px #100D0A; pointer-events: none; }
 .wf-label.pr-row strong { color: #B5C4D4; }
 .wf-label.pr-col strong { color: #F0C27A; }
 </style>
@@ -33,14 +34,14 @@ permalink: /lab/pipeline-race/
         <button data-pr-view="columnar">Columnar track</button>
         <button id="pr-orbit" class="active" aria-pressed="true">Orbit</button>
       </div>
-      <span class="wf-year" id="pr-clock" aria-live="off"></span>
+      <span class="pr-clock" id="pr-clock"></span>
       <span class="wf-hint">Drag to orbit · scroll to zoom · right-drag to pan</span>
     </div>
 
     <div class="wf-panel">
       <div class="wf-ctl">
         <label for="pr-rows">Rows in the table <output id="pr-rows-out"></output></label>
-        <input type="range" id="pr-rows" min="0" max="100" value="74" step="1">
+        <input type="range" id="pr-rows" min="0" max="16" value="12" step="1">
       </div>
       <div class="wf-ctl">
         <label for="pr-cols">Columns in the table <output id="pr-cols-out"></output></label>
@@ -84,7 +85,7 @@ permalink: /lab/pipeline-race/
         <tbody id="pr-breakdown"></tbody>
       </table>
       <p>The clock in the corner shows simulated time. It runs slowly while the columnar track works so you can watch it, then speeds up until the row track finishes. The playback speed is shown next to it.</p>
-      <p class="wf-small">This is an illustrative model. The speeds come from a simplified formula with made-up constants, written out in one block at the top of the page's script. They are not benchmarks and not measurements of any real system or project.</p>
+      <p class="wf-small">This is an illustrative model. The speeds come from a simplified formula with made-up constants, written out in one config block in the page's model script. They are not benchmarks and not measurements of any real system or project.</p>
     </div>
   </section>
 </div>
