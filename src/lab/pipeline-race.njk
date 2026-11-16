@@ -1,0 +1,95 @@
+---
+layout: base.njk
+title: "Pipeline race in 3D — Pragmatic Agents Lab"
+description: "An interactive 3D model of why a columnar, vectorised data engine refreshes a table so much faster than a row-at-a-time ETL job. Race the two on the same input and switch each advantage off."
+permalink: /lab/pipeline-race/
+---
+<style>{% include "css/lab.css" %}
+/* extra rules for this page only */
+.pr-toggles { display: flex; gap: 8px; flex-wrap: wrap; }
+.pr-group { margin-top: 20px; }
+.pr-group > span { display: block; font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px; }
+.pr-table { width: 100%; max-width: 700px; border-collapse: collapse; margin: 6px 0 18px; font-size: 14px; }
+.pr-table th, .pr-table td { text-align: left; padding: 7px 10px 7px 0; border-top: 1px solid var(--hairline); font-variant-numeric: tabular-nums; }
+.pr-table th { font-weight: 600; color: var(--secondary); border-top: 0; }
+.pr-table td + td, .pr-table th + th { text-align: right; padding-right: 0; padding-left: 10px; white-space: nowrap; }
+.wf-stat b { font-size: 21px; }
+.wf-label.pr-row strong { color: #B5C4D4; }
+.wf-label.pr-col strong { color: #F0C27A; }
+</style>
+
+<div class="wf-wrap">
+  <section>
+    <span class="kicker">Lab · interactive model</span>
+    <h1>Pipeline race: one row at a time against <span class="hl">whole columns</span></h1>
+    <p class="sub">Two pipelines run the same six steps on the same table. The front track carries each record on its own and writes every step's result to staging. The back track reads only the columns it needs, moves them as tall batches across several cores, and never stops between steps. Press Start, then orbit the scene.</p>
+
+    <div class="wf-stage" id="pr-stage">
+      <canvas id="pr-canvas" aria-label="3D scene: two tracks run from a source table to a target table. On the front track single records hop from one staging pile to the next through six step gates. On the back track tall glowing column batches travel in parallel lanes through the same six steps without stopping."></canvas>
+      <div class="wf-labels" id="pr-labels"></div>
+      <div class="wf-views">
+        <button data-pr-view="overview">Overview</button>
+        <button data-pr-view="row">Row track</button>
+        <button data-pr-view="columnar">Columnar track</button>
+        <button id="pr-orbit" class="active" aria-pressed="true">Orbit</button>
+      </div>
+      <span class="wf-year" id="pr-clock" aria-live="off"></span>
+      <span class="wf-hint">Drag to orbit · scroll to zoom · right-drag to pan</span>
+    </div>
+
+    <div class="wf-panel">
+      <div class="wf-ctl">
+        <label for="pr-rows">Rows in the table <output id="pr-rows-out"></output></label>
+        <input type="range" id="pr-rows" min="0" max="100" value="74" step="1">
+      </div>
+      <div class="wf-ctl">
+        <label for="pr-cols">Columns in the table <output id="pr-cols-out"></output></label>
+        <input type="range" id="pr-cols" min="4" max="120" value="40" step="1">
+      </div>
+      <div class="wf-ctl">
+        <label for="pr-needed">Columns the query needs <output id="pr-needed-out"></output></label>
+        <input type="range" id="pr-needed" min="1" max="40" value="6" step="1">
+      </div>
+      <div class="wf-ctl">
+        <label for="pr-cores">CPU cores <output id="pr-cores-out"></output></label>
+        <input type="range" id="pr-cores" min="1" max="16" value="8" step="1">
+      </div>
+    </div>
+
+    <div class="pr-group">
+      <span id="pr-toggles-label">Columnar advantages (click to switch off)</span>
+      <div class="pr-toggles wf-buttons" role="group" aria-labelledby="pr-toggles-label">
+        <button class="arch-btn active" id="pr-t-prune" aria-pressed="true">Column pruning + filter pushdown</button>
+        <button class="arch-btn active" id="pr-t-parallel" aria-pressed="true">Parallel cores</button>
+        <button class="arch-btn active" id="pr-t-vector" aria-pressed="true">Vectorised batches</button>
+      </div>
+    </div>
+    <div class="pr-group wf-buttons">
+      <button class="arch-btn active" id="pr-start">Start the race</button>
+    </div>
+
+    <div class="wf-stats" aria-live="off">
+      <div class="wf-stat"><b id="pr-row-rows">0</b><span id="pr-row-step">row track: rows through step 1</span></div>
+      <div class="wf-stat"><b id="pr-row-time">0 s</b><span id="pr-row-total">row track: simulated time</span></div>
+      <div class="wf-stat"><b id="pr-col-rows">0</b><span>columnar track: rows processed</span></div>
+      <div class="wf-stat"><b id="pr-col-time">0 s</b><span id="pr-col-total">columnar track: simulated time</span></div>
+      <div class="wf-stat"><b id="pr-ratio">×1</b><span>finishing ratio in this model</span></div>
+    </div>
+
+    <div class="wf-notes">
+      <p><strong>What it shows.</strong> A row-at-a-time ETL job pays a fixed overhead for every record at every step, touches every column whether the query needs it or not, and writes each step's result to a staging table before the next step reads it back. A Polars-style columnar engine plans the whole query first. It reads only the needed columns and applies the filter while reading, so the unneeded columns drop away before any work starts. It then runs the steps as one fused pass over large column batches, spread across the CPU cores.</p>
+      <p><strong>What to try.</strong> Switch off one advantage at a time and restart. Without pruning, wide batches carry every column. Without parallel cores, one lane does all the work. Without vectorised batches, the tall slabs break into single values and the per-row overhead comes back. With all three off, the only saving left is the missing staging. Then raise the column count while the query still needs six columns: the row track slows down and the columnar track does not.</p>
+      <table class="pr-table">
+        <thead><tr><th>Configuration at these settings</th><th>Simulated time</th><th>Against the row job</th></tr></thead>
+        <tbody id="pr-breakdown"></tbody>
+      </table>
+      <p>The clock in the corner shows simulated time. It runs slowly while the columnar track works so you can watch it, then speeds up until the row track finishes. The playback speed is shown next to it.</p>
+      <p class="wf-small">This is an illustrative model. The speeds come from a simplified formula with made-up constants, written out in one block at the top of the page's script. They are not benchmarks and not measurements of any real system or project.</p>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "/js/vendor/three.module.min.js", "three/addons/": "/js/vendor/three-addons/" } }
+</script>
+<script type="module" src="/js/lab/pipeline-race.js"></script>

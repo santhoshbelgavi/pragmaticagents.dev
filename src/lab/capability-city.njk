@@ -1,0 +1,103 @@
+---
+layout: base.njk
+title: "Capability city — Pragmatic Agents Lab"
+description: "An interactive 3D capability map of a private-credit and private-equity manager's operations. Building height shows operational volume and colour shows whether the work is manual, automated or ready for AI agents."
+permalink: /lab/capability-city/
+---
+<style>{% include "css/lab.css" %}
+/* Extra rules for this page only. The three level colours match LEVELS in capability-city.js. */
+.cc-legend { display: flex; flex-wrap: wrap; gap: 6px 20px; margin-top: 12px; font-size: 13px; color: var(--muted); }
+.cc-legend span { display: inline-flex; align-items: center; gap: 7px; }
+.cc-swatch { display: inline-block; width: 12px; height: 12px; border-radius: 2px; flex: none; }
+.cc-manual { background: #8EA2B8; }
+.cc-automated { background: #E2AD62; }
+.cc-agent { background: #4FB8AD; }
+.cc-ctl-name { display: block; font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px; }
+.cc-seg { flex-wrap: wrap; max-width: 100%; }
+.cc-pick { width: 100%; font: 500 14px var(--sans); color: var(--text); background: #fff; border: 1px solid var(--hairline-strong); border-radius: 6px; padding: 8px 10px; }
+.cc-pick:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 1px; }
+.cc-detail { margin-top: 22px; padding: 18px 20px; background: var(--card); border: 1px solid var(--hairline); border-radius: 8px; min-height: 132px; }
+.cc-detail h2 { font: 700 20px var(--heading); color: var(--text); margin: 0 0 6px; }
+.cc-meta { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 14px; font-size: 13px; color: var(--muted); margin-bottom: 10px; }
+.cc-chip { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; color: var(--secondary); }
+.cc-detail p { margin: 0 0 8px; max-width: 760px; }
+.cc-detail p:last-child { margin-bottom: 0; }
+.cc-stat-row { display: flex; align-items: center; gap: 8px; }
+@media (max-width: 640px) { .cc-seg button { padding: 8px 10px; } .cc-label-pin span { display: block; } }
+</style>
+
+<div class="wf-wrap">
+  <section>
+    <span class="kicker">Lab · interactive model</span>
+    <h1>Capability city: where the work is <span class="hl">manual, automated or agent-ready</span></h1>
+    <p class="sub">This is a business capability map of a private-credit and private-equity manager's operations, drawn as a city. Each district is a business area and each building is one capability. Height shows how much operational volume it handles. Colour shows how the work is done.</p>
+
+    <div class="wf-stage" id="cc-stage">
+      <canvas id="cc-canvas" aria-label="3D scene: seven raised plots, one per business area, each holding five to seven buildings. Building height shows relative operational volume and colour shows whether the capability is manual, automated or agent-ready. Use the Capability list below the scene to select a building with the keyboard."></canvas>
+      <div class="wf-labels" id="cc-labels"></div>
+      <div class="wf-views">
+        <button data-cc-view="overview">Overview</button>
+        <button data-cc-view="treasury">Treasury</button>
+        <button data-cc-view="settlement">Settlement</button>
+        <button data-cc-view="accounting">Accounting</button>
+        <button id="cc-orbit" aria-pressed="false">Orbit</button>
+      </div>
+      <span class="wf-hint">Drag to orbit · scroll to zoom · click a building</span>
+    </div>
+
+    <div class="cc-legend" aria-label="Legend">
+      <span><i class="cc-swatch cc-manual"></i>Manual: people do the work in spreadsheets and email</span>
+      <span><i class="cc-swatch cc-automated"></i>Automated: rules and systems do the work</span>
+      <span><i class="cc-swatch cc-agent"></i>Agent-ready: an AI agent prepares it, a person approves</span>
+      <span>Height: relative operational volume</span>
+    </div>
+
+    <div class="wf-panel">
+      <div>
+        <span class="cc-ctl-name" id="cc-state-name">State</span>
+        <div class="wf-seg cc-seg" role="group" aria-labelledby="cc-state-name">
+          <button data-cc-mode="today" class="active" aria-pressed="true">Today</button>
+          <button data-cc-mode="target" aria-pressed="false">Target state</button>
+        </div>
+      </div>
+      <div>
+        <span class="cc-ctl-name" id="cc-filter-name">Show</span>
+        <div class="wf-seg cc-seg" role="group" aria-labelledby="cc-filter-name">
+          <button data-cc-filter="all" class="active" aria-pressed="true">All</button>
+          <button data-cc-filter="manual" aria-pressed="false">Manual</button>
+          <button data-cc-filter="automated" aria-pressed="false">Automated</button>
+          <button data-cc-filter="agent" aria-pressed="false">Agent-ready</button>
+        </div>
+      </div>
+      <div class="wf-ctl">
+        <label for="cc-pick">Capability</label>
+        <select id="cc-pick" class="cc-pick"><option value="">Choose a capability</option></select>
+      </div>
+    </div>
+
+    <div class="cc-detail" id="cc-detail" aria-live="polite">
+      <h2 id="cc-d-name">No capability selected</h2>
+      <div class="cc-meta" id="cc-d-meta"></div>
+      <p id="cc-d-what">Click a building, or choose one from the Capability list, to see what it is and why it is at its current level.</p>
+      <p id="cc-d-why"></p>
+    </div>
+
+    <div class="wf-stats">
+      <div class="wf-stat"><b id="cc-n-manual">0</b><span class="cc-stat-row"><i class="cc-swatch cc-manual"></i>manual</span></div>
+      <div class="wf-stat"><b id="cc-n-automated">0</b><span class="cc-stat-row"><i class="cc-swatch cc-automated"></i>automated</span></div>
+      <div class="wf-stat"><b id="cc-n-agent">0</b><span class="cc-stat-row"><i class="cc-swatch cc-agent"></i>agent-ready</span></div>
+      <div class="wf-stat"><b id="cc-n-total">0</b><span id="cc-n-caption">capabilities, today</span></div>
+    </div>
+
+    <div class="wf-notes">
+      <p><strong>What to try.</strong> Press Manual to see which work is still done by hand. The other buildings sink and the tall ones left standing are where volume and manual effort meet. Then press All and switch to Target state. Watch which buildings change colour and how the counts move. Click a building that changed to read what has to happen to get it there.</p>
+      <p>Some buildings stay manual in the target state. Valuation and investment committee approval are judgements by named people, and low-volume work such as opening bank accounts is not worth automating. A capability is marked agent-ready when the inputs are documents or free text, the steps can be checked, and a person can approve the result before anything is booked or sent.</p>
+      <p class="wf-small">The map is an illustrative model. The capabilities, volumes and automation levels are generic and do not describe a specific firm.</p>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "/js/vendor/three.module.min.js", "three/addons/": "/js/vendor/three-addons/" } }
+</script>
+<script type="module" src="/js/lab/capability-city.js"></script>
