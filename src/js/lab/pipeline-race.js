@@ -401,7 +401,7 @@ $("pr-start").addEventListener("click", startRace);
 
 const VIEWS = {
   row: { pos: V(-7, 8, 25), target: V(0, 2.6, RZ) },
-  columnar: { pos: V(-25, 10.5, 5), target: V(1, 2.2, CZ) },
+  columnar: { pos: V(-33, 13, 11), target: V(0, 2, CZ) },
 };
 document.querySelectorAll("[data-pr-view]").forEach((b) => b.addEventListener("click", () => {
   const view = VIEWS[b.dataset.prView];
