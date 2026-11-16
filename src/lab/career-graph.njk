@@ -1,0 +1,96 @@
+---
+layout: base.njk
+title: "Career graph in 3D — Pragmatic Agents Lab"
+description: "A 3D map of 21 years of work in financial operations: employers on a timeline, with the business domains, systems and measurable results connected to each."
+permalink: /lab/career-graph/
+---
+<style>{% include "css/lab.css" %}</style>
+<style>
+/* Labels: only employers and year marks are always on. The script unhides the rest for the hovered or selected node. */
+.cg-label-employer strong { font-family: var(--heading); font-size: 13px; }
+.cg-label-result strong { color: #FFD68A; }
+.cg-label-year strong { font-size: 10.5px; font-weight: 500; color: #8F8576; font-variant-numeric: tabular-nums; }
+.wf-label { transition: opacity .15s; }
+.cg-label-clash { opacity: 0; }
+.wf-stage canvas.cg-pointer { cursor: pointer; }
+
+/* Filter buttons: a small mark in each repeats the node's shape and colour in the scene. */
+.cg-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 20px; }
+.cg-filters > span { font-size: 13px; font-weight: 600; color: var(--secondary); margin-right: 4px; }
+.cg-filter { display: inline-flex; align-items: center; gap: 8px; font: 600 13px var(--sans); color: var(--secondary); background: #fff; border: 1px solid var(--hairline-strong); border-radius: 6px; padding: 7px 12px; cursor: pointer; }
+.cg-filter[aria-pressed="false"] { color: var(--muted); background: transparent; text-decoration: line-through; }
+.cg-filter[aria-pressed="false"] .cg-mark { opacity: .3; }
+.cg-filter:focus-visible, .cg-list button:focus-visible, .cg-links button:focus-visible { outline: 2px solid var(--accent-ink); outline-offset: 2px; }
+.cg-mark { width: 11px; height: 11px; flex: none; background: var(--c); }
+.cg-mark-employer { border: 2px solid var(--c); background: #2A241C; }
+.cg-mark-domain { border-radius: 50%; }
+.cg-mark-system { transform: rotate(45deg) scale(.85); }
+.cg-mark-result { border-radius: 50%; box-shadow: 0 0 0 3px color-mix(in srgb, var(--c) 35%, transparent); }
+.cg-mark-project { border-radius: 50%; background: transparent; border: 3px solid var(--c); }
+
+/* Detail panel for the selected node. */
+.cg-detail { margin-top: 20px; padding: 20px 22px; background: var(--card); border: 1px solid var(--hairline); border-left: 3px solid var(--accent); border-radius: 8px; min-height: 132px; }
+.cg-detail .cg-type { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
+.cg-detail h2 { font-family: var(--heading); font-size: 22px; margin: 6px 0 2px; color: var(--text); }
+.cg-detail .cg-meta { font-size: 14px; color: var(--muted); margin: 0 0 8px; }
+.cg-detail .cg-note { margin: 8px 0 0; max-width: 760px; }
+.cg-detail .cg-case { display: inline-block; margin-top: 10px; font-weight: 600; }
+.cg-links { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 14px; }
+.cg-links span { font-size: 13px; color: var(--muted); margin-right: 2px; }
+.cg-links button, .cg-list button { display: inline-flex; align-items: center; gap: 7px; font: 500 13px var(--sans); color: var(--secondary); background: transparent; border: 1px solid var(--hairline); border-radius: 5px; padding: 5px 9px; cursor: pointer; text-align: left; }
+.cg-links button:hover, .cg-list button:hover { border-color: var(--accent); color: var(--accent-ink); }
+.cg-list button[aria-current="true"] { border-color: var(--accent); background: #fff; color: var(--accent-ink); font-weight: 600; }
+
+/* Plain list of every node, so the graph can be read and driven without a pointer. */
+.cg-list { margin-top: 34px; }
+.cg-list h2 { font-family: var(--heading); font-size: 20px; margin-bottom: 4px; }
+.cg-list > p { font-size: 14px; color: var(--muted); margin-bottom: 18px; }
+.cg-groups { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 22px 28px; }
+.cg-group h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; border-top: 1px solid var(--hairline-strong); padding-top: 10px; }
+.cg-group h3 small { font-weight: 400; color: var(--muted); margin-left: 6px; }
+.cg-group ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.cg-group .cg-mark { width: 9px; height: 9px; }
+@media (max-width: 640px) { .cg-detail { padding: 16px; } .cg-detail h2 { font-size: 19px; } .cg-label-employer strong { font-size: 11px; } }
+</style>
+
+<div class="wf-wrap">
+  <section>
+    <span class="kicker">Lab · interactive map</span>
+    <h1>21 years of work, as <span class="hl">one connected graph</span></h1>
+    <p class="sub">Employers rise along a spiral from 2005 to today. Around each one sit the business domains, the systems used and the results delivered. Hover or tap a node to see what it connects to. Select it to read the detail.</p>
+
+    <div class="wf-stage" id="cg-stage">
+      <canvas id="cg-canvas" aria-label="3D graph: seven employers placed on a rising spiral timeline from 2005 to today, each linked to its business domains, systems and results. The same information is in the list below the scene."></canvas>
+      <div class="wf-labels" id="cg-labels"></div>
+      <div class="wf-views">
+        <button id="cg-overview">Overview</button>
+        <button id="cg-tour">Tour</button>
+        <button id="cg-orbit" class="active" aria-pressed="true">Orbit</button>
+      </div>
+      <span class="wf-hint">Drag to orbit · scroll to zoom · click a node</span>
+    </div>
+
+    <div class="cg-filters" id="cg-filters" role="group" aria-label="Show or hide node types"><span>Show</span></div>
+
+    <div class="cg-detail" id="cg-detail" aria-live="polite"></div>
+
+    <div class="wf-stats" id="cg-stats"></div>
+
+    <div class="cg-list" id="cg-list">
+      <h2>Everything in the graph</h2>
+      <p>The same nodes as a list, grouped by employer. Choosing one selects it in the scene and shows its detail above.</p>
+      <div class="cg-groups" id="cg-groups"></div>
+    </div>
+
+    <div class="wf-notes">
+      <p><strong>How to read it.</strong> Height is time. Each employer sits on the spiral at the years worked there, and the brighter stretch of the spiral is the length of the tenure. Lines run from employer to domain to system to result. The brightest nodes are results.</p>
+      <p>Some systems appear once and link to several employers: PL/SQL across three banks, SWIFT at BNY Mellon and again in the <a href="/work/wire-automation/">wire automation work</a>. The projects in the middle of the spiral are <a href="/projects/">independent work</a>, built and run on my own infrastructure.</p>
+      <p class="wf-small">Every figure comes from the case studies on this site and from santhoshbelgavi.com. The current employer is not named.</p>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "/js/vendor/three.module.min.js", "three/addons/": "/js/vendor/three-addons/" } }
+</script>
+<script type="module" src="/js/lab/career-graph.js"></script>
