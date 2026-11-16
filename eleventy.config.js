@@ -5,6 +5,8 @@ export default function (eleventyConfig) {
   // three.js is served from our own origin because the site's CSP only allows 'self' scripts
   eleventyConfig.addPassthroughCopy({ "node_modules/three/build/three.module.min.js": "/js/vendor/three.module.min.js" });
   eleventyConfig.addPassthroughCopy({ "node_modules/three/examples/jsm/controls/OrbitControls.js": "/js/vendor/three-addons/controls/OrbitControls.js" });
+  eleventyConfig.addPassthroughCopy({ "node_modules/three/examples/jsm/postprocessing": "/js/vendor/three-addons/postprocessing" });
+  eleventyConfig.addPassthroughCopy({ "node_modules/three/examples/jsm/shaders": "/js/vendor/three-addons/shaders" });
   eleventyConfig.addFilter("readableDate", (d) =>
     new Date(d).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric", timeZone: "UTC" })
   );
