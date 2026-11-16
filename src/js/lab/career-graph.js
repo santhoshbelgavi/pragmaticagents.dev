@@ -28,10 +28,11 @@ const CONFIG = {
     result:   { color: 0xffc468, css: "#E0A030", size: 0.33, level: 3 },
     project:  { color: 0xa58be0, css: "#8B6FD0", size: 0.42, level: 1 },
   },
+  resultGlow: 1.6,                // above 1.0 so results bloom; much higher and close-ups wash out
   dim: 0.1,                       // opacity of everything outside the highlighted neighbourhood
   edge: { radius: 0.024, opacity: 0.34, bow: 0.14 },
   pickRadiusPx: 24,               // how close a pointer must be to a node to hit it
-  tour: { pause: 4.5, distance: 17, nodeDistance: 12 },
+  tour: { pause: 4.5, distance: 19, nodeDistance: 16 },
 };
 
 const $ = (id) => document.getElementById(id);
@@ -160,7 +161,7 @@ for (const n of nodes) {
     n.mats.push({ mat: s.mat, base: 1 }, { mat: s.edgeMat, base: 0.95 });
   } else {
     const mat = n.type === "result"
-      ? new THREE.MeshBasicMaterial({ color: glow(T.color, 1.9), toneMapped: false, transparent: true })
+      ? new THREE.MeshBasicMaterial({ color: glow(T.color, CONFIG.resultGlow), toneMapped: false, transparent: true, fog: false }) // no fog: far results must still glow
       : new THREE.MeshStandardMaterial({ color: T.color, emissive: T.color, emissiveIntensity: 0.3, roughness: 0.45, metalness: 0.1, flatShading: n.type === "system", transparent: true });
     n.mesh = new THREE.Mesh(geo, mat);
     if (n.type === "project") n.mesh.rotation.x = Math.PI / 2.6;
@@ -176,7 +177,7 @@ for (const n of nodes) {
 
 // ---------- edges ----------
 // Each edge is a thin tube that bows away from the spiral's axis, so links read as arcs in space.
-const EDGE_COLD = new THREE.Color(0x9a7a48), EDGE_HOT = glow(LOOK.gold, 1.7);
+const EDGE_COLD = new THREE.Color(0x9a7a48), EDGE_HOT = glow(LOOK.gold, 1.25);
 for (const e of edges) {
   const mid = e.a.pos.clone().add(e.b.pos).multiplyScalar(0.5);
   const len = e.a.pos.distanceTo(e.b.pos);
@@ -264,7 +265,8 @@ function nodeAt(clientX, clientY) {
     proj.copy(n.pos).project(st.camera);
     if (proj.z > 1 || proj.z < -1) continue;
     const dpx = Math.hypot(((proj.x + 1) / 2) * r.width - x, ((1 - proj.y) / 2) * r.height - y);
-    if (dpx < bestD) { bestD = dpx; best = n; }
+    const d = n.goal < 1 ? dpx * 1.6 : dpx; // highlighted nodes win over dimmed ones behind them
+    if (d < bestD) { bestD = d; best = n; }
   }
   return best;
 }

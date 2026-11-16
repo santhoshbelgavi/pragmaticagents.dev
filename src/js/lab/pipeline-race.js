@@ -38,15 +38,16 @@ const VISUAL = {
   record: { x: 0.34, y: 0.2, z: 1.1 },
   hop: { travel: 2.0, gap: 0.5, fastForward: 2.2 },           // seconds per hop, seconds between records
   maxColumns: 16,                                             // columns drawn, whatever the table has
-  batchesPerLane: 4,
-  slab: { x: 0.1, pitch: 0.16, loose: 0.28 },                 // loose = size of a single value when not vectorised
+  batchesPerLane: 5,
+  slab: { x: 0.16, pitch: 0.26, loose: 0.28 },                 // loose = size of a single value when not vectorised
   laneSpeed: { vectorised: 9, loose: 4 },                     // scene units per second
 };
 
 const COLOR = {
   record: glow(LOOK.steel, 0.8), recordMoving: glow(LOOK.steel, 2.1), recordTarget: glow(LOOK.steel, 1.25),
-  needed: glow(LOOK.gold, 1.15), neededHot: glow(LOOK.gold, 1.9),
-  unneeded: new THREE.Color(0x3d4a48), unneededMoving: glow(LOOK.teal, 0.9),
+  recordRead: glow(LOOK.steel, 0.26),                       // already read: the table stays, dimmed
+  needed: glow(LOOK.gold, 1.15), neededHot: glow(LOOK.gold, 1.9), neededRead: glow(LOOK.gold, 0.24),
+  unneeded: new THREE.Color(0x3d4a48), unneededRead: new THREE.Color(0x1f2625), unneededMoving: glow(LOOK.teal, 0.9),
 };
 
 // ---------- stage ----------
@@ -55,8 +56,8 @@ const $ = (id) => document.getElementById(id);
 const portrait = $("pr-stage").clientWidth < $("pr-stage").clientHeight;
 const st = createStage({
   stageEl: $("pr-stage"), canvas: $("pr-canvas"), labelEl: $("pr-labels"),
-  target: [0, 3, 0.5], halfHeight: 8, elevation: 24,
-  ...(portrait ? { halfWidth: 13, azimuth: -64 } : { halfWidth: 23, azimuth: -14 }),
+  target: [0, 2.6, 0.5], halfHeight: 7, elevation: 24,
+  ...(portrait ? { halfWidth: 13, azimuth: -64 } : { halfWidth: 20.5, azimuth: -14 }),
 });
 const V = (x, y, z) => new THREE.Vector3(x, y, z);
 const slotX = (i) => LAYOUT.x0 + LAYOUT.pitch * i;
@@ -85,7 +86,7 @@ const gates = MODEL.steps.map((name, s) => {
   return mat;
 });
 st.addLabel("Staging table", "written, then read back", V(pileX(2), 0.1, RZ + 2.2), "pr-row");
-const rowTitle = st.addLabel("Row-at-a-time ETL job", "", V(2, 7.4, RZ), "wf-label-title pr-row");
+const rowTitle = st.addLabel("Row-at-a-time ETL job", "", V(3, 0.1, RZ + 3.6), "wf-label-title pr-row");
 
 // ---------- columnar track structures ----------
 const CZ = LAYOUT.colZ;
@@ -129,7 +130,7 @@ function instanced(max) {
 }
 const P = VISUAL.pile, pileCap = P.perLayer * P.layers;
 const recordMesh = instanced((STEPS + 1) * pileCap + 16);
-const slabMesh = instanced(VISUAL.maxColumns * (2 + 16 * VISUAL.batchesPerLane));
+const slabMesh = instanced(VISUAL.maxColumns * (3 + 16 * VISUAL.batchesPerLane));
 
 const dummy = new THREE.Object3D();
 function put(mesh, x, y, z, sx, sy, sz, color, rotY = 0) {
@@ -163,10 +164,11 @@ function columnsDrawn() {
 // ---------- drawing the row track ----------
 const rowsShare = (p) => (p > MODEL.filterStep ? MODEL.selectivity : 1); // piles after the filter hold fewer rows
 function pileTop(count) { return 0.2 + Math.ceil(count / P.perLayer) * P.dy; }
-function drawPile(p, count, color) {
+// Draws `count` records; those from index `unread` up have already been read and are dimmed.
+function drawPile(p, count, unread, color) {
   for (let i = 0; i < count; i++) {
     const layer = Math.floor(i / P.perLayer), k = i % P.perLayer;
-    put(recordMesh, pileX(p) + (k - 1) * P.dx, 0.2 + P.dy / 2 + layer * P.dy, RZ, VISUAL.record.x, VISUAL.record.y, VISUAL.record.z, color);
+    put(recordMesh, pileX(p) + (k - 1) * P.dx, 0.2 + P.dy / 2 + layer * P.dy, RZ, VISUAL.record.x, VISUAL.record.y, VISUAL.record.z, i < unread ? color : COLOR.recordRead);
   }
 }
 function drawRowTrack(rp, running) {
@@ -174,9 +176,11 @@ function drawRowTrack(rp, running) {
   const counts = [];
   for (let p = 0; p <= STEPS; p++) {
     const full = pileCap * rowsShare(p);
-    const share = rp.done ? (p === STEPS ? 1 : 0) : p === rp.step ? 1 - rp.frac : p === rp.step + 1 ? rp.frac : 0;
-    counts[p] = Math.round(full * share);
-    drawPile(p, counts[p], p === STEPS ? COLOR.recordTarget : COLOR.record);
+    // Written so far, and how much of that the next step has not read yet. Staging tables stay once written.
+    const written = rp.done || p <= rp.step ? 1 : p === rp.step + 1 ? rp.frac : 0;
+    const unread = rp.done ? (p === STEPS ? 1 : 0) : p < rp.step ? 0 : p === rp.step ? 1 - rp.frac : written;
+    counts[p] = Math.round(full * written);
+    drawPile(p, counts[p], Math.round(full * unread), p === STEPS ? COLOR.recordTarget : COLOR.record);
   }
   // Records in flight: lift off the pile, pass the gate (pause there for the per-row overhead), drop on the next pile.
   let atGate = 0;
@@ -215,8 +219,11 @@ function drawColumnarTrack(progress, planShare, running) {
   for (let i = 0; i < cd.total; i++) {
     const keep = cd.isNeeded[i];
     const pruned = !keep && params.prune;
-    const h = H * (pruned ? 1 - smooth(planShare) : 1 - progress);
-    if (h > 0.02) put(slabMesh, pileX(0), h / 2, colZAt(i), 0.9, h, spread * 0.7, keep ? (planShare > 0 ? COLOR.neededHot : COLOR.needed) : COLOR.unneeded);
+    const top = pruned ? H * (1 - smooth(planShare)) : H;   // pruned columns are never read
+    const h = pruned ? top : H * (1 - progress);            // the part still to be read
+    const w = spread * 0.7;
+    if (h > 0.02) put(slabMesh, pileX(0), h / 2, colZAt(i), 0.9, h, w, keep ? (planShare > 0 ? COLOR.neededHot : COLOR.needed) : COLOR.unneeded);
+    if (top - h > 0.02) put(slabMesh, pileX(0), (top + h) / 2, colZAt(i), 0.9, top - h, w, keep ? COLOR.neededRead : COLOR.unneededRead);
     const out = H * MODEL.selectivity * progress;
     if (keep && out > 0.02) put(slabMesh, pileX(STEPS), out / 2, colZAt(i), 0.9, out, spread * 0.7, COLOR.neededHot);
   }
@@ -278,7 +285,7 @@ function updateReadouts(rp, progress) {
   rowTitle.set("Row-at-a-time ETL job", rp.done ? "finished in " + fmtTime(row.total) : `step ${rp.step + 1} of ${STEPS} · ${Math.floor(rp.share * 100)}% done`);
   colTitle.set("Polars-style columnar engine", progress >= 1 ? "finished in " + fmtTime(col.total) : race.t < col.plan ? "planning the query" : Math.floor(progress * 100) + "% done");
   $("pr-clock").textContent = race.mode === "ready" ? "Ready"
-    : fmtTime(race.t) + " simulated" + (race.mode === "running" ? " · playback " + fmtSpeed(race.speed) : " · finished");
+    : fmtTime(race.t) + " simulated" + (race.mode === "running" ? " · playback " + fmtSpeed(race.speed) : race.mode === "done" ? " · finished" : " · still frame");
 }
 
 // Text that only changes when a control changes.
