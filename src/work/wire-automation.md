@@ -48,7 +48,7 @@ A modular, configuration-driven wire-processing platform on the infrastructure t
   <div class="arch-stat"><div class="arch-stat-num">$350B+</div><div class="arch-stat-lbl">since inception</div></div>
   <div class="arch-stat"><div class="arch-stat-num">99.9%</div><div class="arch-stat-lbl">via SWIFT</div></div>
 </div>
-<div class="arch-caption">Live simulation — sources normalize and route through the platform core to execution rails.</div>
+<div class="arch-caption">Live simulation — sources normalize and route through the platform core to execution rails. <a href="/lab/wire-flow/">Explore the 3D model →</a></div>
 </div>
 
 Payment initiation was standardized across middle-office teams; instructions flow through Kyriba and out via SWIFT, with the Goldman Sachs Transaction Banking integration carrying execution. I owned the business architecture and integration design: API contract analysis and field mapping between platforms, payment workflow definition, SOW and vendor negotiation, and the process re-engineering that turned common failure modes into handled cases rather than morning surprises. The rollout deliberately attacked the error taxonomy — production issues, recurring user errors, data quality — because STP is won in the last few percent, not the first ninety.

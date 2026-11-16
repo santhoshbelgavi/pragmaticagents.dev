@@ -1,0 +1,80 @@
+---
+layout: base.njk
+title: "Wire flow in 3D — Pragmatic Agents Lab"
+description: "An interactive 3D model of institutional wire processing: drag straight-through processing from 0% to 99.9% and raise the volume to see why the manual desk stops scaling."
+permalink: /lab/wire-flow/
+---
+<style>
+.wf-wrap { max-width: 1180px; margin: 0 auto; padding: 0 40px; }
+.wf-stage { position: relative; height: min(60vh, 560px); min-height: 380px; border: 1px solid var(--hairline-strong); border-radius: 8px; overflow: hidden; background: var(--bg); margin-top: 28px; touch-action: none; }
+.wf-stage canvas { display: block; width: 100%; height: 100%; cursor: grab; }
+.wf-stage canvas:active { cursor: grabbing; }
+.wf-labels { position: absolute; inset: 0; pointer-events: none; overflow: hidden; }
+.wf-label { position: absolute; left: 0; top: 0; text-align: center; white-space: nowrap; font-family: var(--sans); line-height: 1.25; will-change: transform; }
+.wf-label strong { display: block; font-size: 12.5px; font-weight: 600; color: var(--text); }
+.wf-label span { display: block; font-size: 10.5px; color: var(--muted); }
+.wf-label-auto strong { color: var(--accent-ink); }
+.wf-hint { position: absolute; right: 12px; bottom: 10px; font-size: 11.5px; color: var(--muted); pointer-events: none; }
+.wf-panel { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px 36px; margin-top: 20px; align-items: end; }
+.wf-ctl label { display: flex; justify-content: space-between; font-size: 13px; font-weight: 600; color: var(--secondary); margin-bottom: 6px; }
+.wf-ctl output { font-variant-numeric: tabular-nums; color: var(--accent-ink); }
+.wf-ctl input[type=range] { width: 100%; accent-color: var(--accent); }
+.wf-buttons { display: flex; gap: 8px; flex-wrap: wrap; }
+.wf-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-top: 22px; }
+.wf-stat { border-top: 1px solid var(--hairline-strong); padding-top: 10px; }
+.wf-stat b { display: block; font-family: var(--heading); font-size: 24px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--text); }
+.wf-stat b.wf-hot { color: #B03030; }
+.wf-stat span { font-size: 12.5px; color: var(--muted); }
+.wf-notes { max-width: 700px; margin-top: 34px; }
+.wf-notes p { margin-bottom: 14px; }
+.wf-notes .wf-small { font-size: 14px; color: var(--muted); }
+@media (max-width: 640px) { .wf-wrap { padding: 0 18px; } .wf-stage { height: 520px; } .wf-label span { display: none; } .wf-label strong { font-size: 11px; } }
+</style>
+
+<div class="wf-wrap">
+  <section>
+    <span class="kicker">Lab · interactive model</span>
+    <h1>Wire flow, from the manual desk to <span class="hl">99.9% straight through</span></h1>
+    <p class="sub">Each cube is a payment. Drag the first slider to move payments off the manual desk and onto the automation platform. Then raise the volume and watch which lane copes.</p>
+
+    <div class="wf-stage" id="wf-stage">
+      <canvas id="wf-canvas" aria-label="3D model of payments flowing from three source systems to the banks, through either a manual operations desk or an automation platform"></canvas>
+      <div class="wf-labels" id="wf-labels"></div>
+      <span class="wf-hint">Drag to rotate · scroll to zoom</span>
+    </div>
+
+    <div class="wf-panel">
+      <div class="wf-ctl">
+        <label for="wf-stp">Straight-through processing <output id="wf-stp-out">99.9%</output></label>
+        <input type="range" id="wf-stp" min="0" max="999" value="999" step="1">
+      </div>
+      <div class="wf-ctl">
+        <label for="wf-vol">Payment volume <output id="wf-vol-out">×1</output></label>
+        <input type="range" id="wf-vol" min="1" max="18" value="1" step="1">
+      </div>
+      <div class="wf-buttons">
+        <button class="arch-btn active" id="wf-journey">Play the journey: 0% to 99.9%</button>
+        <button class="arch-btn" id="wf-play">Pause</button>
+        <button class="arch-btn" id="wf-reset">Reset</button>
+      </div>
+    </div>
+
+    <div class="wf-stats">
+      <div class="wf-stat"><b id="wf-auto">0</b><span>settled straight through</span></div>
+      <div class="wf-stat"><b id="wf-manual">0</b><span>settled by hand</span></div>
+      <div class="wf-stat"><b id="wf-queue">0</b><span>waiting at the desk</span></div>
+      <div class="wf-stat"><b id="wf-rework">0</b><span>sent back for rework</span></div>
+    </div>
+
+    <div class="wf-notes">
+      <p><strong>What to try.</strong> Set straight-through processing to 0% and volume to ×18. The desk has two people and the queue never clears. Now drag processing back to 99.9% at the same volume: the platform absorbs it and the desk handles only the exceptions.</p>
+      <p>That is the argument of the <a href="/work/wire-automation/">wire automation case study</a>: the real programme went from 0% to 99%+ straight-through processing and absorbed roughly 18× volume growth without adding headcount.</p>
+      <p class="wf-small">This is an illustrative simulation. Speeds, error rates and queue sizes are chosen to show the mechanism and are not client data.</p>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "/js/vendor/three.module.min.js", "three/addons/": "/js/vendor/three-addons/" } }
+</script>
+<script type="module" src="/js/lab/wire-flow.js"></script>
