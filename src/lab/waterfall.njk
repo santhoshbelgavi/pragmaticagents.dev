@@ -1,0 +1,83 @@
+---
+layout: base.njk
+title: "Distribution waterfall in 3D — Pragmatic Agents Lab"
+description: "An interactive 3D model of a private equity distribution waterfall: watch exit proceeds pour down four tiers, and compare European whole-fund carry with American deal-by-deal carry and its clawback."
+permalink: /lab/waterfall/
+---
+<style>
+{% include "css/lab.css" %}
+.wt-deals { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 14px 28px; margin-top: 18px; }
+.wt-note { font-size: 14px; color: var(--muted); margin-top: 10px; min-height: 2.8em; }
+.wf-label.wt-tank strong { font-size: 13px; }
+.wf-label.wt-tank span { font-size: 12.5px; color: #F3EBDD; font-variant-numeric: tabular-nums; }
+.wf-label.wt-tier span, .wf-label.wt-deal span { font-variant-numeric: tabular-nums; }
+@media (max-width: 640px) { .wf-label.wt-tank span { display: block; } .wf-label.wt-deal { display: none; } }
+</style>
+
+<div class="wf-wrap">
+  <section>
+    <span class="kicker">Lab · interactive model</span>
+    <h1>The distribution waterfall, <span class="hl">tier by tier</span></h1>
+    <p class="sub">A $100M fund makes four deals. As each one exits, its proceeds pour down four tiers and drain into two tanks: one for the investors, one for the manager. Switch between the two common styles and watch when the manager gets paid.</p>
+
+    <div class="wf-stage" id="wt-stage">
+      <canvas id="wt-canvas" aria-label="3D scene: four deal columns on a top step pour cash down a staircase of four basins, labelled return of capital, preferred return, catch-up and carry split. Each basin drains into an investors tank and a manager tank."></canvas>
+      <div class="wf-labels" id="wt-labels"></div>
+      <div class="wf-views">
+        <button data-wt-view="overview">Overview</button>
+        <button data-wt-view="tiers">Tiers</button>
+        <button data-wt-view="tanks">Tanks</button>
+        <button data-wt-view="top">From the top</button>
+        <button id="wt-orbit">Orbit</button>
+      </div>
+      <span class="wf-year" id="wt-year-out">Year 0.0</span>
+      <span class="wf-hint">Drag to orbit · scroll to zoom · right-drag to pan</span>
+    </div>
+
+    <div class="wf-panel">
+      <div>
+        <div class="wf-seg" role="group" aria-label="Waterfall style">
+          <button data-wt-style="european" class="active">European · whole fund</button>
+          <button data-wt-style="american">American · deal by deal</button>
+        </div>
+        <p class="wt-note" id="wt-style-note"></p>
+      </div>
+      <div class="wf-ctl">
+        <label for="wt-year">Fund timeline <span>years 0 to 6.5</span></label>
+        <input type="range" id="wt-year" min="0" max="6.5" step="0.01" value="0">
+      </div>
+      <div class="wf-buttons">
+        <button class="arch-btn active" id="wt-play">Pause</button>
+        <button class="arch-btn" id="wt-replay">Replay from year 0</button>
+      </div>
+    </div>
+
+    <div class="wf-stats">
+      <div class="wf-stat"><b id="wt-lp">$0M</b><span>paid to investors so far</span></div>
+      <div class="wf-stat"><b id="wt-gp">$0M</b><span>carry paid to the manager so far</span></div>
+      <div class="wf-stat"><b id="wt-entitled">$0M</b><span>carry earned on the whole fund</span></div>
+      <div class="wf-stat"><b id="wt-claw">none</b><span>clawback owed at fund end</span></div>
+    </div>
+
+    <div class="wt-deals">
+      <div class="wf-ctl"><label for="wt-deal-0">Deal A · exits year 2 <output id="wt-deal-0-out"></output></label><input type="range" id="wt-deal-0" min="0" max="4" step="0.1" value="2.5"></div>
+      <div class="wf-ctl"><label for="wt-deal-1">Deal B · exits year 3 <output id="wt-deal-1-out"></output></label><input type="range" id="wt-deal-1" min="0" max="4" step="0.1" value="0.4"></div>
+      <div class="wf-ctl"><label for="wt-deal-2">Deal C · exits year 4 <output id="wt-deal-2-out"></output></label><input type="range" id="wt-deal-2" min="0" max="4" step="0.1" value="3"></div>
+      <div class="wf-ctl"><label for="wt-deal-3">Deal D · exits year 5 <output id="wt-deal-3-out"></output></label><input type="range" id="wt-deal-3" min="0" max="4" step="0.1" value="1.2"></div>
+      <div class="wf-ctl"><label for="wt-hurdle">Preferred return <output id="wt-hurdle-out"></output></label><input type="range" id="wt-hurdle" min="0" max="12" step="0.5" value="8"></div>
+      <div class="wf-ctl"><label for="wt-carry">Carried interest <output id="wt-carry-out"></output></label><input type="range" id="wt-carry" min="10" max="30" step="1" value="20"></div>
+    </div>
+
+    <div class="wf-notes">
+      <p><strong>The four tiers.</strong> First, investors get their capital back. Second, they get the preferred return on it. Third, the manager catches up until it holds its carry share of the profit paid so far. Fourth, everything left is split, here 80/20.</p>
+      <p><strong>What to try.</strong> Play the European style and stop at year 3: the manager has been paid nothing, because the fund has not yet returned its capital. Switch to American at the same year: the manager already holds $7.5M of carry from Deal A alone. Run to the end and the American manager has been paid $17.5M against $15.5M earned on the whole fund, so $2.0M is owed back. That gap is the clawback, and it exists because Deal B lost money after carry on Deal A had been paid.</p>
+      <p>Then make every deal a winner. The two styles pay the same total and the clawback disappears. The difference between them is timing and who carries the risk in between.</p>
+      <p class="wf-small">Simplified on purpose: all capital is called at year 0, the preferred return compounds annually, the catch-up is 100% to the manager, and there are no fees, recycling, escrow or loss carry-forward. The deals are invented for illustration and are not from any fund.</p>
+    </div>
+  </section>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "/js/vendor/three.module.min.js", "three/addons/": "/js/vendor/three-addons/" } }
+</script>
+<script type="module" src="/js/lab/waterfall.js"></script>
